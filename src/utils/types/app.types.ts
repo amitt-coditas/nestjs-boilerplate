@@ -1,4 +1,40 @@
+import { ParsedQs } from 'qs';
+
 import { TIMEZONE } from '../constants/app.constants';
+
+export interface LogContext {
+  className: string;
+  methodName: string;
+  traceId?: string;
+  userId?: string;
+  [key: string]: unknown;
+}
+
+export interface ValidationFieldError {
+  field: string;
+  errors: string[];
+}
+
+export interface ErrorResponse {
+  statusCode: number;
+  message: string;
+  errorCode: string;
+  errors?: ValidationFieldError[];
+  timestamp: string;
+  path: string;
+}
+
+export interface RequestContextInfo {
+  method: string;
+  url: string;
+  query: ParsedQs;
+  params: Record<string, string>;
+  headers: {
+    'user-agent'?: string;
+    'x-forwarded-for'?: string;
+    [key: string]: string | undefined;
+  };
+}
 
 export interface TimezoneTime {
   timeZone: TIMEZONE;

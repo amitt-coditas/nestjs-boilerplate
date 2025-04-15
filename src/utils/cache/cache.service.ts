@@ -2,7 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
-import { CACHE_KEYS } from './constants/cache-keys.enum';
+import { CACHE_KEYS } from '../constants/app.constants';
 
 @Injectable()
 export class CacheService {

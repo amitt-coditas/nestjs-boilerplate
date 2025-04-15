@@ -17,11 +17,11 @@ const entitiesDir = join(__dirname, '/../../**/*.entity{.ts,.js}');
 
 export const ormConfig: DataSourceOptions = {
   type: 'postgres',
-  host: configService.get('DB_HOST'),
-  port: +configService.get('DB_PORT'),
-  username: configService.get('DB_USERNAME'),
-  password: configService.get('DB_PASSWORD'),
-  database: configService.get('DB_DATABASE_NAME'),
+  host: configService.getOrThrow<string>(ENV_KEYS.DB_HOST),
+  port: Number(configService.getOrThrow<string>(ENV_KEYS.DB_PORT)),
+  username: configService.getOrThrow<string>(ENV_KEYS.DB_USERNAME),
+  password: configService.getOrThrow<string>(ENV_KEYS.DB_PASSWORD),
+  database: configService.getOrThrow<string>(ENV_KEYS.DB_NAME),
   entities: [entitiesDir],
   migrations: [migrationsDir],
   migrationsRun: false,

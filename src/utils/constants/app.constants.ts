@@ -4,3 +4,7 @@ export enum TIMEZONE {
   UTC = 'UTC',
   ASIA_KOLKATA = 'Asia/Kolkata',
 }
+
+export enum CACHE_KEYS {
+  TEST_IDS = 'test_ids',
+}

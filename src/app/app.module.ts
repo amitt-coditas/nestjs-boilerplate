@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CacheModule } from './utils/cache/cache.module';
-import { DatabaseConfigModule } from './utils/database/database-config.module';
-import { LoggerModule } from './utils/logger/logger.module';
+
+import {
+  CacheModule,
+  ConfigModule,
+  DatabaseConfigModule,
+  LoggerModule,
+  HttpExceptionFilterModule,
+} from '../utils';
 
 @Module({
   imports: [
@@ -15,6 +19,7 @@ import { LoggerModule } from './utils/logger/logger.module';
     CacheModule,
     ScheduleModule.forRoot(),
     DatabaseConfigModule,
+    HttpExceptionFilterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

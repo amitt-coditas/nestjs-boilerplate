@@ -1,22 +1,27 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as Sentry from '@sentry/nestjs';
 
-import { AppModule } from './app.module';
-// import { ENV_KEYS, NODE_ENV } from './utils/config/config.module';
+import { AppModule } from './app/app.module';
+import {
+  GlobalHttpExceptionFilter,
+  CustomValidationPipe,
+  ENV_KEYS,
+  LoggerService,
+} from './utils';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // const configService = app.get<ConfigService>(ConfigService);
-  // const env = configService.get<NodeEnv>(ENV_KEYS.NODE_ENV);
+  const configService = app.get<ConfigService>(ConfigService);
+  const port = configService.get<number>(ENV_KEYS.PORT) || 3000;
+  // const env = configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+  const logger = await app.resolve(LoggerService);
+  const filter = app.get(GlobalHttpExceptionFilter);
+
+  app.useGlobalPipes(new CustomValidationPipe());
+  app.useGlobalFilters(filter);
 
   app.enableCors({
     credentials: true,
@@ -46,7 +51,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(port).then(() => {
+    logger.info('App', bootstrap.name, `Application started on port ${port}`);
+  });
 }
 
 bootstrap().catch((error) => {

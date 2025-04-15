@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FindManyOptions, FindOneOptions, FindOptionsWhere } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import { AbstractEntity } from './abstract.entity';
 import { AbstractRepository } from './abstract.repository';
 
+import { NotFoundException, InternalServerException } from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -12,6 +13,8 @@ export abstract class AbstractService<
   TEntity extends AbstractEntity,
   TRepository extends AbstractRepository<TEntity>,
 > {
+  private readonly tableName = this.repository.metadata.tableName;
+
   constructor(
     protected readonly repository: TRepository,
     protected readonly logger: LoggerService,
@@ -40,7 +43,7 @@ export abstract class AbstractService<
         'Error finding records:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error finding records');
     }
   }
 
@@ -69,7 +72,7 @@ export abstract class AbstractService<
         'Error finding one record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error finding one record');
     }
   }
 
@@ -90,7 +93,7 @@ export abstract class AbstractService<
     try {
       const result = await this.findOne(findQuery);
 
-      if (!result) throw new NotFoundException('Record not found');
+      if (!result) throw new NotFoundException(this.tableName);
 
       return result;
     } catch (error) {
@@ -100,7 +103,7 @@ export abstract class AbstractService<
         'Error finding one record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error finding one record');
     }
   }
 
@@ -131,7 +134,7 @@ export abstract class AbstractService<
         'Error finding one record by id:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error finding one record');
     }
   }
 
@@ -152,7 +155,7 @@ export abstract class AbstractService<
     try {
       const result = await this.findOneById(id);
 
-      if (!result) throw new NotFoundException('Record not found');
+      if (!result) throw new NotFoundException(this.tableName);
 
       return result;
     } catch (error) {
@@ -162,7 +165,7 @@ export abstract class AbstractService<
         'Error finding one record by id:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error finding one record');
     }
   }
 
@@ -189,7 +192,7 @@ export abstract class AbstractService<
         'Error creating record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error creating record');
     }
   }
 
@@ -220,7 +223,7 @@ export abstract class AbstractService<
         'Error updating record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error updating record');
     }
   }
 
@@ -246,7 +249,7 @@ export abstract class AbstractService<
         'Error soft removing record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error soft removing record');
     }
   }
 
@@ -272,7 +275,7 @@ export abstract class AbstractService<
         'Error removing record:',
         error,
       );
-      throw error;
+      throw new InternalServerException('Error removing record');
     }
   }
 }
