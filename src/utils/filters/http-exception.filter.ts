@@ -16,10 +16,6 @@ import {
   ValidationFieldError,
 } from '../types/app.types';
 
-/**
- * Global HTTP exception filter that catches all exceptions
- * and formats them into a standardized response structure
- */
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
   constructor(@Inject(LoggerService) private readonly logger: LoggerService) {}

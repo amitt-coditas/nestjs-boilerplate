@@ -9,6 +9,7 @@ import {
   CustomValidationPipe,
   ENV_KEYS,
   LoggerService,
+  ResponseInterceptor,
 } from './utils';
 
 async function bootstrap() {
@@ -18,10 +19,11 @@ async function bootstrap() {
   // const env = configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
 
   const logger = await app.resolve(LoggerService);
-  const filter = app.get(GlobalHttpExceptionFilter);
 
-  app.useGlobalPipes(new CustomValidationPipe());
+  const filter = app.get(GlobalHttpExceptionFilter);
   app.useGlobalFilters(filter);
+  app.useGlobalPipes(new CustomValidationPipe());
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   app.enableCors({
     credentials: true,

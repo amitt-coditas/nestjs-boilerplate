@@ -24,6 +24,13 @@ export interface ErrorResponse {
   path: string;
 }
 
+export interface SuccessResponse<T> {
+  data: T;
+  path: string;
+  statusCode: number;
+  timestamp: string;
+}
+
 export interface RequestContextInfo {
   method: string;
   url: string;
