@@ -1,1 +1,3 @@
-export enum CACHE_KEYS {}
+export enum CACHE_KEYS {
+  TEST_IDS = 'test_ids',
+}

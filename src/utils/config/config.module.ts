@@ -5,7 +5,12 @@ import {
 } from '@nestjs/config';
 import * as joi from 'joi';
 
-export type NodeEnv = 'dev-local' | 'dev' | 'qa' | 'prod';
+export enum NODE_ENV {
+  DEV_LOCAL = 'dev-local',
+  DEV = 'dev',
+  QA = 'qa',
+  PROD = 'prod',
+}
 
 const ENV_SCHEMA = {
   PORT: joi.number().required(),
@@ -16,7 +21,10 @@ const ENV_SCHEMA = {
 
   SENTRY_DSN: joi.string().required(),
 
-  NODE_ENV: joi.string().valid('dev-local', 'dev', 'qa', 'prod').required(),
+  NODE_ENV: joi
+    .string()
+    .valid(NODE_ENV.DEV_LOCAL, NODE_ENV.DEV, NODE_ENV.QA, NODE_ENV.PROD)
+    .required(),
   DB_HOST: joi.string().required(),
   DB_PORT: joi.number().required(),
   DB_USERNAME: joi.string().required(),

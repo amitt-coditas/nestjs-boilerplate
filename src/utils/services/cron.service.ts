@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
-import { LoggerService } from '../logger/logger.service';
 import { TIMEZONE } from '../constants/app.constants';
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class CronService {
@@ -44,7 +44,7 @@ export class CronService {
       `Initializing ${jobName} notifications cron job with cron expression: ${cronExpression}`,
     );
 
-    const job = new CronJob(
+    const job = new CronJob<null>(
       cronExpression,
       async () => callbackFunction(),
       undefined, // onComplete

@@ -9,6 +9,7 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import { AbstractEntity } from './abstract.entity';
+
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()

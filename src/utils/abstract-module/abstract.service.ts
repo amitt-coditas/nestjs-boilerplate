@@ -4,6 +4,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 
 import { AbstractEntity } from './abstract.entity';
 import { AbstractRepository } from './abstract.repository';
+
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()

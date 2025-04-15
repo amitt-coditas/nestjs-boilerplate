@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { InternalServerErrorException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 
 import { ENV_KEYS } from '../config/config.module';
-import { InternalServerErrorException } from '../exceptions/internal-server-error.exception';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -17,11 +16,7 @@ export class GoogleService {
     private readonly configService: ConfigService,
   ) {
     this.googleAuthClientIds = [
-      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID_1),
-      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID_IOS_D),
-      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID_IOS_Q),
-      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID_IOS_P),
-      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID_ANDROID),
+      this.configService.getOrThrow(ENV_KEYS.GOOGLE_CLIENT_ID),
     ].filter(Boolean) as string[];
 
     const googleAuthClientSecret = this.configService.getOrThrow<string>(
@@ -35,10 +30,9 @@ export class GoogleService {
   }
 
   /**
-   * Verifies the provided Google ID token and retrieves the associated user's profile information.
-   * @param {string} idToken - The Google ID token to verify.
-   * @returns {Promise<TokenPayload>} - The verified profile information as a TokenPayload.
-   * @throws {InternalServerErrorException} - If an error occurs during token verification.
+   * Verify Google credentials
+   * @param idToken - The Google ID token to verify
+   * @returns The verified profile information
    */
   async verifyGoogleCredentials(idToken: string) {
     this.logger.debug(
@@ -53,8 +47,9 @@ export class GoogleService {
         idToken,
         audience: this.googleAuthClientIds,
       });
+
       const profile = tokenInfo.getPayload();
-      return profile as TokenPayload;
+      return profile;
     } catch (error) {
       this.logger.error(
         this.fileName,
