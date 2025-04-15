@@ -1,0 +1,53 @@
+import { Global, Module } from '@nestjs/common';
+import {
+  ConfigModule as NestConfigModule,
+  ConfigService,
+} from '@nestjs/config';
+import * as joi from 'joi';
+
+export type NodeEnv = 'dev-local' | 'dev' | 'qa' | 'prod';
+
+const ENV_SCHEMA = {
+  PORT: joi.number().required(),
+  JWT_SECRET: joi.string().required(),
+  JWT_EXPIRATION_INTERVAL_MS: joi.string().required(),
+  JWT_REFRESH_SECRET: joi.string().required(),
+  JWT_REFRESH_EXPIRATION_INTERVAL_MS: joi.string().required(),
+
+  SENTRY_DSN: joi.string().required(),
+
+  NODE_ENV: joi.string().valid('dev-local', 'dev', 'qa', 'prod').required(),
+  DB_HOST: joi.string().required(),
+  DB_PORT: joi.number().required(),
+  DB_USERNAME: joi.string().required(),
+  DB_PASSWORD: joi.string().required(),
+  DB_NAME: joi.string().required(),
+
+  GOOGLE_CLIENT_ID: joi.string().required(),
+  GOOGLE_CLIENT_SECRET: joi.string().required(),
+} as const;
+
+const envSchema = joi.object(ENV_SCHEMA);
+type EnvSchemaKeys = keyof typeof ENV_SCHEMA;
+
+export const ENV_KEYS = Object.freeze(
+  Object.keys(ENV_SCHEMA).reduce(
+    (acc, key) => ({ ...acc, [key]: key }),
+    {} as { [K in EnvSchemaKeys]: K },
+  ),
+);
+
+@Global()
+@Module({
+  imports: [
+    NestConfigModule.forRoot({
+      validationSchema: envSchema,
+      validationOptions: {
+        isGlobal: true,
+      },
+    }),
+  ],
+  providers: [ConfigService],
+  exports: [ConfigService],
+})
+export class ConfigModule {}
