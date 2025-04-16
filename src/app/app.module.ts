@@ -4,6 +4,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { RoleModule } from '../modules/role/role.module';
+import { UserModule } from '../modules/user/user.module';
 import {
   CacheModule,
   ConfigModule,
@@ -20,6 +22,8 @@ import {
     ScheduleModule.forRoot(),
     DatabaseConfigModule,
     HttpExceptionFilterModule,
+    RoleModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

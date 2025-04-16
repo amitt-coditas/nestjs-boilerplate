@@ -10,6 +10,7 @@ import { LogContext } from '../types/app.types';
 export class LoggerService {
   private readonly logger: ConsoleLogger;
   private readonly environment: NODE_ENV;
+  className: string;
   private traceId: string;
 
   constructor(private readonly configService?: ConfigService) {
@@ -17,6 +18,10 @@ export class LoggerService {
     this.traceId = randomUUID();
     this.environment =
       this.configService?.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
+  }
+
+  setClassName(className: string): void {
+    this.className = className;
   }
 
   setTraceId(traceId: string): void {
@@ -28,19 +33,32 @@ export class LoggerService {
   }
 
   /**
-   * Generate log context object automatically
+   * Static factory method to create a logger with a class name
    * @param className - The class name
+   * @param configService - Optional config service
+   * @returns A new LoggerService instance
+   */
+  static forClass(
+    className: string,
+    configService?: ConfigService,
+  ): LoggerService {
+    const logger = new LoggerService(configService);
+    logger.setClassName(className);
+    return logger;
+  }
+
+  /**
+   * Generate log context object automatically
    * @param methodName - The method name
    * @param additionalContext - Any additional context to include
    * @returns A structured log context object
    */
   createContext(
-    className: string,
     methodName: string,
     additionalContext: Record<string, unknown> = {},
   ): LogContext {
     return {
-      className,
+      className: this.className,
       methodName,
       traceId: this.traceId,
       environment: this.environment,
@@ -50,76 +68,52 @@ export class LoggerService {
 
   /**
    * Log an informational message
-   * @param className - The class name
    * @param methodName - The method name
    * @param message - The log message
    * @param parameters - Additional parameters to log
    */
-  info(
-    className: string,
-    methodName: string,
-    message: string,
-    ...parameters: unknown[]
-  ): void {
-    const context = this.createContext(className, methodName);
+  info(methodName: string, message: string, ...parameters: unknown[]): void {
+    const context = this.createContext(methodName);
     const formattedMessage = this.formatMessage(message, parameters);
     this.logger.log(formattedMessage, JSON.stringify(context));
   }
 
   /**
    * Log an error message
-   * @param className - The class name
    * @param methodName - The method name
    * @param message - The log message
    * @param parameters - Additional parameters to log
    */
-  error(
-    className: string,
-    methodName: string,
-    message: string,
-    ...parameters: unknown[]
-  ): void {
-    const context = this.createContext(className, methodName);
+  error(methodName: string, message: string, ...parameters: unknown[]): void {
+    const context = this.createContext(methodName);
     const formattedMessage = this.formatMessage(message, parameters);
     this.logger.error(formattedMessage, undefined, JSON.stringify(context));
   }
 
   /**
    * Log a warning message
-   * @param className - The class name
    * @param methodName - The method name
    * @param message - The log message
    * @param parameters - Additional parameters to log
    */
-  warn(
-    className: string,
-    methodName: string,
-    message: string,
-    ...parameters: unknown[]
-  ): void {
-    const context = this.createContext(className, methodName);
+  warn(methodName: string, message: string, ...parameters: unknown[]): void {
+    const context = this.createContext(methodName);
     const formattedMessage = this.formatMessage(message, parameters);
     this.logger.warn(formattedMessage, JSON.stringify(context));
   }
 
   /**
    * Log a debug message (only in development environments)
-   * @param className - The class name
    * @param methodName - The method name
    * @param message - The log message
    * @param parameters - Additional parameters to log
    */
-  debug(
-    className: string,
-    methodName: string,
-    message: string,
-    ...parameters: unknown[]
-  ): void {
+  debug(methodName: string, message: string, ...parameters: unknown[]): void {
     if (this.environment === NODE_ENV.PROD) {
       return;
     }
 
-    const context = this.createContext(className, methodName);
+    const context = this.createContext(methodName);
     const formattedMessage = this.formatMessage(message, parameters);
     this.logger.debug(formattedMessage, JSON.stringify(context));
   }

@@ -10,13 +10,13 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 
 import { AbstractEntity } from './abstract.entity';
 
+import { InternalServerException } from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export abstract class AbstractRepository<
   TEntity extends AbstractEntity,
 > extends Repository<TEntity> {
-  readonly fileName = this.constructor.name;
   readonly logger: LoggerService;
 
   constructor(
@@ -24,7 +24,7 @@ export abstract class AbstractRepository<
     private readonly entityManager: EntityManager,
   ) {
     super(entity, entityManager);
-    this.logger = new LoggerService();
+    this.logger = LoggerService.forClass(this.constructor.name);
   }
 
   /**
@@ -35,25 +35,24 @@ export abstract class AbstractRepository<
   async findOneRecord(
     findQuery: FindOneOptions<TEntity>,
   ): Promise<TEntity | undefined> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.findOneRecord.name,
-        'Finding one record for find query',
-        findQuery,
-      );
+    this.logger.debug(
+      this.findOneRecord.name,
+      'Finding one record for find query',
+      findQuery,
+    );
 
+    try {
       const record = await this.findOne(findQuery);
       if (!record) return undefined;
 
       return record;
     } catch (error) {
       this.logger.error(
-        this.fileName,
         this.findOneRecord.name,
         'Error finding one record',
         error,
       );
+      throw error;
     }
   }
 
@@ -65,25 +64,24 @@ export abstract class AbstractRepository<
   async findManyRecords(
     findQuery: FindManyOptions<TEntity>,
   ): Promise<TEntity[]> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.findManyRecords.name,
-        'Finding many records for find query',
-        findQuery,
-      );
+    this.logger.debug(
+      this.findManyRecords.name,
+      'Finding many records for find query',
+      findQuery,
+    );
 
+    try {
       const records = await this.find(findQuery);
       if (!records) return [];
 
       return records;
     } catch (error) {
       this.logger.error(
-        this.fileName,
         this.findManyRecords.name,
         'Error finding many records',
         error,
       );
+      throw error;
     }
   }
 
@@ -93,25 +91,16 @@ export abstract class AbstractRepository<
    * @returns string - The identifier of the created record
    */
   async createRecord(input: QueryDeepPartialEntity<TEntity>): Promise<string> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.createRecord.name,
-        'Creating record',
-        input,
-      );
+    this.logger.debug(this.createRecord.name, 'Creating record', input);
 
+    try {
       const insertResult = await this.insert(input);
       const identifier = insertResult.identifiers[0].id as string;
 
       return identifier;
     } catch (error) {
-      this.logger.error(
-        this.fileName,
-        this.createRecord.name,
-        'Error creating record',
-        error,
-      );
+      this.logger.error(this.createRecord.name, 'Error creating record', error);
+      throw error;
     }
   }
 
@@ -125,24 +114,16 @@ export abstract class AbstractRepository<
     record: TEntity,
     updateFields: QueryDeepPartialEntity<TEntity>,
   ): Promise<boolean> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.updateRecord.name,
-        'Updating record',
-        record.id,
-      );
+    this.logger.debug(this.updateRecord.name, 'Updating record', record.id);
 
+    try {
       const updateResult = await this.update(record.id, updateFields);
+      if (!updateResult.affected) throw new InternalServerException();
 
       return updateResult.affected > 0;
     } catch (error) {
-      this.logger.error(
-        this.fileName,
-        this.updateRecord.name,
-        'Error updating record',
-        error,
-      );
+      this.logger.error(this.updateRecord.name, 'Error updating record', error);
+      throw error;
     }
   }
 
@@ -152,14 +133,13 @@ export abstract class AbstractRepository<
    * @returns boolean - The result of the soft removal
    */
   async softRemoveRecord(record: DeepPartial<TEntity>): Promise<boolean> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.softRemoveRecord.name,
-        'Soft removing record',
-        record.id,
-      );
+    this.logger.debug(
+      this.softRemoveRecord.name,
+      'Soft removing record',
+      record.id,
+    );
 
+    try {
       Object.assign(record, { deletedAt: new Date() });
       await this.save(record);
 
@@ -168,11 +148,11 @@ export abstract class AbstractRepository<
       return softRemoveResult.id === record.id;
     } catch (error) {
       this.logger.error(
-        this.fileName,
         this.softRemoveRecord.name,
         'Error soft removing record',
         error,
       );
+      throw error;
     }
   }
 
@@ -182,24 +162,15 @@ export abstract class AbstractRepository<
    * @returns boolean - The result of the removal
    */
   async removeRecord(record: TEntity): Promise<boolean> {
-    try {
-      this.logger.debug(
-        this.fileName,
-        this.removeRecord.name,
-        'Removing record',
-        record.id,
-      );
+    this.logger.debug(this.removeRecord.name, 'Removing record', record.id);
 
+    try {
       const removeResult = await this.remove(record);
 
       return removeResult.id === record.id;
     } catch (error) {
-      this.logger.error(
-        this.fileName,
-        this.removeRecord.name,
-        'Error removing record',
-        error,
-      );
+      this.logger.error(this.removeRecord.name, 'Error removing record', error);
+      throw error;
     }
   }
 }

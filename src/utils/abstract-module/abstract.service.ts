@@ -13,12 +13,13 @@ export abstract class AbstractService<
   TEntity extends AbstractEntity,
   TRepository extends AbstractRepository<TEntity>,
 > {
+  readonly logger: LoggerService;
+
   private readonly tableName = this.repository.metadata.tableName;
 
-  constructor(
-    protected readonly repository: TRepository,
-    protected readonly logger: LoggerService,
-  ) {}
+  constructor(protected readonly repository: TRepository) {
+    this.logger = LoggerService.forClass(this.constructor.name);
+  }
 
   /**
    * Finds all records matching the given query.
@@ -28,7 +29,6 @@ export abstract class AbstractService<
    */
   async findMany(findQuery: FindManyOptions<TEntity>): Promise<TEntity[]> {
     this.logger.debug(
-      this.constructor.name,
       this.findMany.name,
       'Finding records with query:',
       findQuery,
@@ -37,12 +37,7 @@ export abstract class AbstractService<
     try {
       return await this.repository.findManyRecords(findQuery);
     } catch (error) {
-      this.logger.error(
-        this.constructor.name,
-        this.findMany.name,
-        'Error finding records:',
-        error,
-      );
+      this.logger.error(this.findMany.name, 'Error finding records:', error);
       throw new InternalServerException('Error finding records');
     }
   }
@@ -57,7 +52,6 @@ export abstract class AbstractService<
     findQuery: FindOneOptions<TEntity>,
   ): Promise<TEntity | undefined> {
     this.logger.debug(
-      this.constructor.name,
       this.findOne.name,
       `Finding one record with query:`,
       findQuery,
@@ -66,12 +60,7 @@ export abstract class AbstractService<
     try {
       return await this.repository.findOneRecord(findQuery);
     } catch (error) {
-      this.logger.error(
-        this.constructor.name,
-        this.findOne.name,
-        'Error finding one record:',
-        error,
-      );
+      this.logger.error(this.findOne.name, 'Error finding one record:', error);
       throw new InternalServerException('Error finding one record');
     }
   }
@@ -84,7 +73,6 @@ export abstract class AbstractService<
    */
   async findOneOrThrow(findQuery: FindOneOptions<TEntity>): Promise<TEntity> {
     this.logger.debug(
-      this.constructor.name,
       this.findOneOrThrow.name,
       'Finding one record with query:',
       findQuery,
@@ -98,7 +86,6 @@ export abstract class AbstractService<
       return result;
     } catch (error) {
       this.logger.error(
-        this.constructor.name,
         this.findOneOrThrow.name,
         'Error finding one record:',
         error,
@@ -114,12 +101,7 @@ export abstract class AbstractService<
    * @throws If an error occurs during the operation.
    */
   async findOneById(id: string): Promise<TEntity | undefined> {
-    this.logger.debug(
-      this.constructor.name,
-      this.findOneById.name,
-      'Finding one record by id:',
-      id,
-    );
+    this.logger.debug(this.findOneById.name, 'Finding one record by id:', id);
 
     try {
       return await this.repository.findOneRecord({
@@ -129,7 +111,6 @@ export abstract class AbstractService<
       });
     } catch (error) {
       this.logger.error(
-        this.constructor.name,
         this.findOneById.name,
         'Error finding one record by id:',
         error,
@@ -146,7 +127,6 @@ export abstract class AbstractService<
    */
   async findOneByIdOrThrow(id: string): Promise<TEntity> {
     this.logger.debug(
-      this.constructor.name,
       this.findOneByIdOrThrow.name,
       'Finding one record by id:',
       id,
@@ -160,7 +140,6 @@ export abstract class AbstractService<
       return result;
     } catch (error) {
       this.logger.error(
-        this.constructor.name,
         this.findOneByIdOrThrow.name,
         'Error finding one record by id:',
         error,
@@ -176,22 +155,12 @@ export abstract class AbstractService<
    * @throws If an error occurs during the operation.
    */
   async create(data: QueryDeepPartialEntity<TEntity>): Promise<string> {
-    this.logger.debug(
-      this.constructor.name,
-      this.create.name,
-      'Creating record with data:',
-      data,
-    );
+    this.logger.debug(this.create.name, 'Creating record with data:', data);
 
     try {
       return await this.repository.createRecord(data);
     } catch (error) {
-      this.logger.error(
-        this.constructor.name,
-        this.create.name,
-        'Error creating record:',
-        error,
-      );
+      this.logger.error(this.create.name, 'Error creating record:', error);
       throw new InternalServerException('Error creating record');
     }
   }
@@ -207,22 +176,12 @@ export abstract class AbstractService<
     entity: TEntity,
     data: QueryDeepPartialEntity<TEntity>,
   ): Promise<boolean> {
-    this.logger.debug(
-      this.constructor.name,
-      this.update.name,
-      `Updating record ${entity.id}`,
-      data,
-    );
+    this.logger.debug(this.update.name, `Updating record ${entity.id}`, data);
 
     try {
       return await this.repository.updateRecord(entity, data);
     } catch (error) {
-      this.logger.error(
-        this.constructor.name,
-        this.update.name,
-        'Error updating record:',
-        error,
-      );
+      this.logger.error(this.update.name, 'Error updating record:', error);
       throw new InternalServerException('Error updating record');
     }
   }
@@ -235,7 +194,6 @@ export abstract class AbstractService<
    */
   async softRemove(entity: TEntity): Promise<boolean> {
     this.logger.debug(
-      this.constructor.name,
       this.softRemove.name,
       `Soft removing record ${entity.id}`,
     );
@@ -244,7 +202,6 @@ export abstract class AbstractService<
       return await this.repository.softRemoveRecord(entity);
     } catch (error) {
       this.logger.error(
-        this.constructor.name,
         this.softRemove.name,
         'Error soft removing record:',
         error,
@@ -260,21 +217,12 @@ export abstract class AbstractService<
    * @throws If an error occurs during the operation.
    */
   async remove(entity: TEntity): Promise<boolean> {
-    this.logger.debug(
-      this.constructor.name,
-      this.remove.name,
-      `Removing record ${entity.id}`,
-    );
+    this.logger.debug(this.remove.name, `Removing record ${entity.id}`);
 
     try {
       return await this.repository.removeRecord(entity);
     } catch (error) {
-      this.logger.error(
-        this.constructor.name,
-        this.remove.name,
-        'Error removing record:',
-        error,
-      );
+      this.logger.error(this.remove.name, 'Error removing record:', error);
       throw new InternalServerException('Error removing record');
     }
   }
