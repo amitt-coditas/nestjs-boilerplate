@@ -11,6 +11,7 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
     project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint/eslint-plugin', 'import', 'prettier'],
   root: true,
@@ -19,29 +20,36 @@ module.exports = {
     jest: true,
   },
   ignorePatterns: ['.eslintrc.js', 'dist/', 'node_modules/'],
+  settings: {
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: './tsconfig.json',
+      },
+    },
+  },
   rules: {
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-unsafe-enum-comparison': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/await-thenable': 'error',
+    // TypeScript Rules
+    '@typescript-eslint/no-explicit-any': 'warn', // Warn on 'any' usage, aligning with noImplicitAny
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }], // Ignore unused vars starting with _
+    '@typescript-eslint/no-floating-promises': 'error', // Ensure promises are awaited
+    '@typescript-eslint/await-thenable': 'error', // Enforce awaiting thenables
+    '@typescript-eslint/no-unsafe-enum-comparison': 'off', // Disable unsafe enum comparison checks
+    '@typescript-eslint/interface-name-prefix': 'off', // Allow flexible interface naming
+    '@typescript-eslint/explicit-function-return-type': 'off', // Don’t require explicit return types
+    '@typescript-eslint/explicit-module-boundary-types': 'off', // Don’t require explicit module boundary types
 
+    // Import Rules
     'import/order': [
       'error',
       {
         groups: [
-          'builtin', // Built-in Node.js modules
-          'internal', // Internal modules
-          'external', // External modules (npm packages)
-          'sibling', // Same directory imports (./)
-          'parent', // Parent directory imports (../)
-          'index', // Index file of the current directory
+          'builtin', // Node.js built-in modules (e.g., fs, path)
+          'external', // npm packages
+          'internal', // Aliased imports (e.g., @utils, @app)
+          'sibling', // ./ imports
+          'parent', // ../ imports
+          'index', // index file imports
           'object', // Object imports
           'type', // Type imports
         ],
@@ -50,6 +58,16 @@ module.exports = {
           {
             pattern: '@nestjs/**',
             group: 'external',
+            position: 'before',
+          },
+          {
+            pattern: '@utils/**',
+            group: 'internal',
+            position: 'before',
+          },
+          {
+            pattern: '@app/**',
+            group: 'internal',
             position: 'before',
           },
         ],

@@ -8,3 +8,9 @@ export enum TIMEZONE {
 export enum CACHE_KEYS {
   TEST_IDS = 'test_ids',
 }
+
+export enum OS_TYPES {
+  ANDROID = 'android',
+  IOS = 'ios',
+  WEB = 'web',
+}

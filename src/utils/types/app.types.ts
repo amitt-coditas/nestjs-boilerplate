@@ -5,7 +5,6 @@ import { TIMEZONE } from '../constants/app.constants';
 export interface LogContext {
   className: string;
   methodName: string;
-  traceId?: string;
   userId?: string;
   [key: string]: unknown;
 }

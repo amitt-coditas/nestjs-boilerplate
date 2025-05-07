@@ -27,10 +27,6 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     const methodName = this.catch.name;
     const className = GlobalHttpExceptionFilter.name;
 
-    const traceId =
-      (req.headers['x-trace-id'] as string) || this.logger.getTraceId();
-    this.logger.setTraceId(traceId);
-
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let errorCode = 'INTERNAL_SERVER_ERROR';
@@ -89,7 +85,6 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       requestInfo,
       status,
       errorCode,
-      traceId,
     };
 
     this.logger.error(className, methodName, `[${status}] ${message}`, {
@@ -106,7 +101,6 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       path: req.url,
     };
 
-    res.setHeader('X-Trace-ID', traceId);
     res.status(status).json(errorResponse);
   }
 }

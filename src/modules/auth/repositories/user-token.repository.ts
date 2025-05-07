@@ -3,11 +3,11 @@ import { DataSource } from 'typeorm';
 
 import { AbstractRepository } from '@utils/index';
 
-import { Role } from './entities/role.entity';
+import { UserToken } from '../entities/user-token.entity';
 
 @Injectable()
-export class RoleRepository extends AbstractRepository<Role> {
+export class UserTokenRepository extends AbstractRepository<UserToken> {
   constructor(private dataSource: DataSource) {
-    super(Role, dataSource.createEntityManager());
+    super(UserToken, dataSource.createEntityManager());
   }
 }

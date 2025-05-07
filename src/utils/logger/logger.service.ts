@@ -1,35 +1,23 @@
-import { randomUUID } from 'crypto';
-
-import { ConsoleLogger, Injectable, Scope } from '@nestjs/common';
+import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { ENV_KEYS, NODE_ENV } from '../config/config.module';
 import { LogContext } from '../types/app.types';
 
-@Injectable({ scope: Scope.TRANSIENT })
+@Injectable()
 export class LoggerService {
   private readonly logger: ConsoleLogger;
   private readonly environment: NODE_ENV;
   className: string;
-  private traceId: string;
 
   constructor(private readonly configService?: ConfigService) {
     this.logger = new ConsoleLogger();
-    this.traceId = randomUUID();
     this.environment =
       this.configService?.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
   }
 
   setClassName(className: string): void {
     this.className = className;
-  }
-
-  setTraceId(traceId: string): void {
-    this.traceId = traceId;
-  }
-
-  getTraceId(): string {
-    return this.traceId;
   }
 
   /**
@@ -60,7 +48,6 @@ export class LoggerService {
     return {
       className: this.className,
       methodName,
-      traceId: this.traceId,
       environment: this.environment,
       ...additionalContext,
     };

@@ -5,7 +5,11 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { AbstractEntity } from './abstract.entity';
 import { AbstractRepository } from './abstract.repository';
 
-import { NotFoundException, InternalServerException } from '../exceptions';
+import {
+  NotFoundException,
+  InternalServerException,
+  ConflictException,
+} from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -15,7 +19,7 @@ export abstract class AbstractService<
 > {
   readonly logger: LoggerService;
 
-  private readonly tableName = this.repository.metadata.tableName;
+  readonly tableName = this.repository.metadata.tableName;
 
   constructor(protected readonly repository: TRepository) {
     this.logger = LoggerService.forClass(this.constructor.name);
@@ -35,7 +39,10 @@ export abstract class AbstractService<
     );
 
     try {
-      return await this.repository.findManyRecords(findQuery);
+      const records = await this.repository.findManyRecords(findQuery);
+      if (!records) return [];
+
+      return records;
     } catch (error) {
       this.logger.error(this.findMany.name, 'Error finding records:', error);
       throw new InternalServerException('Error finding records');
@@ -79,7 +86,7 @@ export abstract class AbstractService<
     );
 
     try {
-      const result = await this.findOne(findQuery);
+      const result = await this.repository.findOne(findQuery);
 
       if (!result) throw new NotFoundException(this.tableName);
 
@@ -133,7 +140,11 @@ export abstract class AbstractService<
     );
 
     try {
-      const result = await this.findOneById(id);
+      const result = await this.repository.findOneRecord({
+        where: {
+          id,
+        } as FindOptionsWhere<TEntity>,
+      });
 
       if (!result) throw new NotFoundException(this.tableName);
 
@@ -158,7 +169,10 @@ export abstract class AbstractService<
     this.logger.debug(this.create.name, 'Creating record with data:', data);
 
     try {
-      return await this.repository.createRecord(data);
+      const identifier = await this.repository.createRecord(data);
+      if (!identifier) throw new ConflictException('Error creating record');
+
+      return identifier;
     } catch (error) {
       this.logger.error(this.create.name, 'Error creating record:', error);
       throw new InternalServerException('Error creating record');
@@ -179,7 +193,10 @@ export abstract class AbstractService<
     this.logger.debug(this.update.name, `Updating record ${entity.id}`, data);
 
     try {
-      return await this.repository.updateRecord(entity, data);
+      const result = await this.repository.updateRecord(entity, data);
+      if (!result) throw new ConflictException('Error updating record');
+
+      return result;
     } catch (error) {
       this.logger.error(this.update.name, 'Error updating record:', error);
       throw new InternalServerException('Error updating record');
@@ -199,7 +216,10 @@ export abstract class AbstractService<
     );
 
     try {
-      return await this.repository.softRemoveRecord(entity);
+      const result = await this.repository.softRemoveRecord(entity);
+      if (!result) throw new ConflictException('Error soft removing record');
+
+      return result;
     } catch (error) {
       this.logger.error(
         this.softRemove.name,
@@ -220,7 +240,10 @@ export abstract class AbstractService<
     this.logger.debug(this.remove.name, `Removing record ${entity.id}`);
 
     try {
-      return await this.repository.removeRecord(entity);
+      const result = await this.repository.removeRecord(entity);
+      if (!result) throw new ConflictException('Error removing record');
+
+      return result;
     } catch (error) {
       this.logger.error(this.remove.name, 'Error removing record:', error);
       throw new InternalServerException('Error removing record');

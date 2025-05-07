@@ -10,7 +10,6 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 
 import { AbstractEntity } from './abstract.entity';
 
-import { InternalServerException } from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -52,7 +51,6 @@ export abstract class AbstractRepository<
         'Error finding one record',
         error,
       );
-      throw error;
     }
   }
 
@@ -63,7 +61,7 @@ export abstract class AbstractRepository<
    */
   async findManyRecords(
     findQuery: FindManyOptions<TEntity>,
-  ): Promise<TEntity[]> {
+  ): Promise<TEntity[] | undefined> {
     this.logger.debug(
       this.findManyRecords.name,
       'Finding many records for find query',
@@ -71,17 +69,13 @@ export abstract class AbstractRepository<
     );
 
     try {
-      const records = await this.find(findQuery);
-      if (!records) return [];
-
-      return records;
+      return await this.find(findQuery);
     } catch (error) {
       this.logger.error(
         this.findManyRecords.name,
         'Error finding many records',
         error,
       );
-      throw error;
     }
   }
 
@@ -90,7 +84,9 @@ export abstract class AbstractRepository<
    * @param input - Record
    * @returns string - The identifier of the created record
    */
-  async createRecord(input: QueryDeepPartialEntity<TEntity>): Promise<string> {
+  async createRecord(
+    input: QueryDeepPartialEntity<TEntity>,
+  ): Promise<string | undefined> {
     this.logger.debug(this.createRecord.name, 'Creating record', input);
 
     try {
@@ -100,7 +96,6 @@ export abstract class AbstractRepository<
       return identifier;
     } catch (error) {
       this.logger.error(this.createRecord.name, 'Error creating record', error);
-      throw error;
     }
   }
 
@@ -113,17 +108,16 @@ export abstract class AbstractRepository<
   async updateRecord(
     record: TEntity,
     updateFields: QueryDeepPartialEntity<TEntity>,
-  ): Promise<boolean> {
+  ): Promise<boolean | undefined> {
     this.logger.debug(this.updateRecord.name, 'Updating record', record.id);
 
     try {
       const updateResult = await this.update(record.id, updateFields);
-      if (!updateResult.affected) throw new InternalServerException();
+      if (!updateResult.affected) return false;
 
       return updateResult.affected > 0;
     } catch (error) {
       this.logger.error(this.updateRecord.name, 'Error updating record', error);
-      throw error;
     }
   }
 
@@ -132,7 +126,9 @@ export abstract class AbstractRepository<
    * @param record - Record
    * @returns boolean - The result of the soft removal
    */
-  async softRemoveRecord(record: DeepPartial<TEntity>): Promise<boolean> {
+  async softRemoveRecord(
+    record: DeepPartial<TEntity>,
+  ): Promise<boolean | undefined> {
     this.logger.debug(
       this.softRemoveRecord.name,
       'Soft removing record',
@@ -152,7 +148,6 @@ export abstract class AbstractRepository<
         'Error soft removing record',
         error,
       );
-      throw error;
     }
   }
 
@@ -161,7 +156,7 @@ export abstract class AbstractRepository<
    * @param record - Record
    * @returns boolean - The result of the removal
    */
-  async removeRecord(record: TEntity): Promise<boolean> {
+  async removeRecord(record: TEntity): Promise<boolean | undefined> {
     this.logger.debug(this.removeRecord.name, 'Removing record', record.id);
 
     try {
@@ -170,7 +165,6 @@ export abstract class AbstractRepository<
       return removeResult.id === record.id;
     } catch (error) {
       this.logger.error(this.removeRecord.name, 'Error removing record', error);
-      throw error;
     }
   }
 }

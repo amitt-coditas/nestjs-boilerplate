@@ -4,7 +4,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
-import { ENV_KEYS } from '../config/config.module';
+import { ENV_KEYS, NODE_ENV } from '../config/config.module';
 
 const logger = new Logger('TypeORMInitializer');
 const configService = new ConfigService();
@@ -25,7 +25,7 @@ export const ormConfig: DataSourceOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir],
   migrationsRun: false,
-  synchronize: false,
+  synchronize: configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) !== NODE_ENV.PROD,
 
   ...(envIsDevLocal
     ? {}

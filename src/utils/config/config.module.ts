@@ -12,6 +12,7 @@ export enum NODE_ENV {
   PROD = 'prod',
 }
 
+/* eslint-disable import/namespace */
 const ENV_SCHEMA = {
   PORT: joi.number().required(),
   JWT_SECRET: joi.string().required(),
@@ -36,6 +37,8 @@ const ENV_SCHEMA = {
 } as const;
 
 const envSchema = joi.object(ENV_SCHEMA);
+/* eslint-enable import/namespace */
+
 type EnvSchemaKeys = keyof typeof ENV_SCHEMA;
 
 export const ENV_KEYS = Object.freeze(
