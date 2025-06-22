@@ -1,9 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+import { PERMIT_ROLES_KEY } from '@utils/index';
+
 import { ROLES } from '../../role/constants/roles.enum';
 import { User } from '../../user/entities/user.entity';
-import { PERMIT_ROLES_KEY } from '../constants/decorators.constant';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {

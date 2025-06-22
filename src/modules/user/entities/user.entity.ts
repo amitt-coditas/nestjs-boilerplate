@@ -13,13 +13,16 @@ export class User extends AbstractEntity {
   @Column({ type: 'text', name: 'l_name' })
   lname: string;
 
+  @Column({ type: 'text', name: 'avatar_url', nullable: true })
+  avatarUrl: string;
+
   @Column({ type: 'text', name: 'phone', unique: true })
   phone: string;
 
   @Column({ type: 'text', name: 'email', unique: true })
   email: string;
 
-  @Column({ type: 'text', name: 'password' })
+  @Column({ type: 'text', name: 'password', nullable: true })
   password: string;
 
   @ManyToOne(() => Role, (role) => role.users)

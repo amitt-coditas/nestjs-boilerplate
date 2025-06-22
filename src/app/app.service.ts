@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
-import { RoleService } from '../modules/role/role.service';
-
 @Injectable()
 export class AppService {
-  constructor(private readonly roleService: RoleService) {}
+  constructor() {}
 
   async onModuleInit() {
-    await this.roleService.populateRolesInDB();
+    // TODO: Uncomment this when the roles are ready
+    // await this.roleService.populateRolesInDB();
   }
 
   healthCheck(): string {

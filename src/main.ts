@@ -1,13 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as Sentry from '@sentry/nestjs';
 
 import {
+  SwaggerSetupService,
   GlobalHttpExceptionFilter,
   CustomValidationPipe,
   ENV_KEYS,
-  LoggerService,
   ResponseInterceptor,
 } from '@utils/index';
 
@@ -18,8 +17,6 @@ async function bootstrap() {
   const configService = app.get<ConfigService>(ConfigService);
   const port = configService.get<number>(ENV_KEYS.PORT) || 3000;
   // const env = configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
-
-  const logger = await app.resolve(LoggerService);
 
   const filter = app.get(GlobalHttpExceptionFilter);
   app.useGlobalFilters(filter);
@@ -44,19 +41,11 @@ async function bootstrap() {
   //   });
   // }
 
-  // Swagger
-  const config = new DocumentBuilder()
-    .setTitle('API') // Change as per the project
-    .setDescription('API description')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Setup Swagger
+  const swaggerSetupService = app.get(SwaggerSetupService);
+  swaggerSetupService.setupSwagger(app);
 
-  await app.listen(port).then(() => {
-    logger.info(bootstrap.name, `Application started on port ${port}`);
-  });
+  await app.listen(port);
 }
 
 bootstrap().catch((error) => {

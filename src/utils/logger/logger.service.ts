@@ -10,27 +10,24 @@ export class LoggerService {
   private readonly environment: NODE_ENV;
   className: string;
 
-  constructor(private readonly configService?: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     this.logger = new ConsoleLogger();
-    this.environment =
-      this.configService?.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
+    this.environment = this.configService.getOrThrow<NODE_ENV>(
+      ENV_KEYS.NODE_ENV,
+    );
   }
 
-  setClassName(className: string): void {
+  private setClassName(className: string): void {
     this.className = className;
   }
 
   /**
    * Static factory method to create a logger with a class name
    * @param className - The class name
-   * @param configService - Optional config service
    * @returns A new LoggerService instance
    */
-  static forClass(
-    className: string,
-    configService?: ConfigService,
-  ): LoggerService {
-    const logger = new LoggerService(configService);
+  static forClass(className: string): LoggerService {
+    const logger = new LoggerService(new ConfigService());
     logger.setClassName(className);
     return logger;
   }
@@ -113,7 +110,7 @@ export class LoggerService {
    */
   private formatMessage(message: string, parameters: unknown[]): string {
     if (parameters.length === 0) {
-      return message;
+      return `>>> ${message}`;
     }
 
     const formattedParams = parameters
@@ -157,7 +154,7 @@ export class LoggerService {
       })
       .join(', ');
 
-    return `${message} | Parameters: ${formattedParams}`;
+    return `>>> ${message} | Parameters: ${formattedParams}`;
   }
 
   /**

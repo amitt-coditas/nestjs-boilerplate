@@ -1,11 +1,9 @@
 import { Body, Controller, Headers, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiBody, ApiHeader } from '@nestjs/swagger';
 
-import { OS_TYPES } from '@utils/index';
+import { Public } from '@utils/decorators';
 
-import { Public } from './decorators/is-public.decorator';
-import { LoginBodyDto } from './dto/login-body.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginBodyDto, SSOLoginBodyDto } from './dto/login-body.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthService } from './services/auth.service';
 import { UserTokenService } from './services/user-token.service';
@@ -19,32 +17,43 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Post('google')
+  @ApiOperation({ summary: 'Google Login' })
+  @ApiBody({ type: SSOLoginBodyDto })
+  async handleGoogleLogin(@Body() input: SSOLoginBodyDto) {
+    return this.authService.handleGoogleLogin(input);
+  }
+
+  @Public()
+  @Post('apple')
+  @ApiOperation({ summary: 'Apple Login' })
+  @ApiBody({ type: SSOLoginBodyDto })
+  async handleAppleLogin(@Body() input: SSOLoginBodyDto) {
+    return this.authService.handleAppleLogin(input);
+  }
+
+  @Public()
+  @Post('facebook')
+  @ApiOperation({ summary: 'Facebook Login' })
+  @ApiBody({ type: SSOLoginBodyDto })
+  async handleFacebookLogin(@Body() input: SSOLoginBodyDto) {
+    return this.authService.handleFacebookLogin(input);
+  }
+
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login' })
   @ApiBody({ type: LoginBodyDto })
-  async login(
-    @Body() loginDto: LoginBodyDto,
-    @Headers('device-id') deviceId: string,
-    @Headers('location') location: string,
-    @Headers('os') os: OS_TYPES,
-    @Headers('fcm-token') fcmToken: string,
-  ) {
-    const loginData: LoginDto = {
-      ...loginDto,
-      deviceId,
-      location,
-      os,
-      fcmToken,
-    };
-    return this.authService.login(loginData);
+  async handleCredentialsLogin(@Body() input: LoginBodyDto) {
+    return this.authService.handleCredentialsLogin(input);
   }
 
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register' })
   @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() input: RegisterDto) {
+    return this.authService.register(input);
   }
 
   @Post('access-token')

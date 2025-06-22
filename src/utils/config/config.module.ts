@@ -15,6 +15,7 @@ export enum NODE_ENV {
 /* eslint-disable import/namespace */
 const ENV_SCHEMA = {
   PORT: joi.number().required(),
+
   JWT_SECRET: joi.string().required(),
   JWT_EXPIRATION_INTERVAL_MS: joi.string().required(),
   JWT_REFRESH_SECRET: joi.string().required(),
@@ -34,6 +35,18 @@ const ENV_SCHEMA = {
 
   GOOGLE_CLIENT_ID: joi.string().required(),
   GOOGLE_CLIENT_SECRET: joi.string().required(),
+
+  AWS_REGION: joi.string().required(),
+  AWS_ACCESS_KEY: joi.string().required(),
+  AWS_SECRET_KEY: joi.string().required(),
+  AWS_BUCKET: joi.string().required(),
+  SOURCE_MAIL: joi.string().required(),
+
+  // For later use
+  // REDIS_HOST: joi.string().required(),
+  // REDIS_PORT: joi.number().required(),
+  // REDIS_USERNAME: joi.string().required(),
+  // REDIS_PASSWORD: joi.string().required(),
 } as const;
 
 const envSchema = joi.object(ENV_SCHEMA);

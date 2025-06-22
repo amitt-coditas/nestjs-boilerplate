@@ -1,5 +1,3 @@
-import { OmitType } from '@nestjs/swagger';
+import { LoginMetadataDto } from './login-metadata.dto';
 
-import { LoginDto } from './login.dto';
-
-export class GenerateTokenDto extends OmitType(LoginDto, ['password']) {}
+export class GenerateTokenDto extends LoginMetadataDto {}

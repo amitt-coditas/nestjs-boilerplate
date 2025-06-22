@@ -14,11 +14,15 @@ export interface ValidationFieldError {
   errors: string[];
 }
 
-export interface ErrorResponse {
+export interface ErrorDetails {
   statusCode: number;
   message: string;
   errorCode: string;
   errors?: ValidationFieldError[];
+}
+
+export interface ErrorResponse {
+  error: ErrorDetails;
   timestamp: string;
   path: string;
 }

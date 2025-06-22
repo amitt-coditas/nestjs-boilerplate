@@ -4,7 +4,6 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -18,14 +17,17 @@ import {
 
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
-  constructor(@Inject(LoggerService) private readonly logger: LoggerService) {}
+  private readonly logger: LoggerService;
+
+  constructor() {
+    this.logger = LoggerService.forClass(this.constructor.name);
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
     const methodName = this.catch.name;
-    const className = GlobalHttpExceptionFilter.name;
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -39,10 +41,25 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
 
       if (typeof response === 'object' && response !== null) {
         const resObj = response as Record<string, unknown>;
-        message = (resObj.message as string) || message;
-        errorCode = (resObj.errorCode as string) || errorCode;
-        if (resObj.errors) {
-          errors = resObj.errors as ValidationFieldError[];
+
+        if (
+          resObj.message === 'Validation failed' &&
+          Array.isArray(resObj.errors)
+        ) {
+          message = 'Validation failed';
+          errorCode = 'VALIDATION_ERROR';
+          errors = resObj.errors.map((error: ValidationFieldError) => ({
+            field: error.field,
+            errors: Array.isArray(error.errors)
+              ? error.errors
+              : [String(error.errors)],
+          }));
+        } else {
+          message = (resObj.message as string) || message;
+          errorCode = (resObj.errorCode as string) || errorCode;
+          if (resObj.errors) {
+            errors = resObj.errors as ValidationFieldError[];
+          }
         }
       } else if (typeof response === 'string') {
         message = response;
@@ -85,18 +102,21 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       requestInfo,
       status,
       errorCode,
+      validationErrors: errors.length > 0 ? errors : undefined,
     };
 
-    this.logger.error(className, methodName, `[${status}] ${message}`, {
+    this.logger.error(methodName, `[${status}] ${message}`, {
       stack,
       ...logContext,
     });
 
     const errorResponse: ErrorResponse = {
-      statusCode: status,
-      message,
-      errorCode,
-      errors: errors.length > 0 ? errors : undefined,
+      error: {
+        statusCode: status,
+        message,
+        errorCode,
+        errors: errors.length > 0 ? errors : undefined,
+      },
       timestamp: new Date().toISOString(),
       path: req.url,
     };

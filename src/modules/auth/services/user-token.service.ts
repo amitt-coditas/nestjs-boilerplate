@@ -23,6 +23,7 @@ export class UserTokenService extends AbstractService<
         deletedAt: IsNull(),
         accessTokenExpiry: MoreThan(new Date()),
       },
+      relations: ['user'],
     });
   }
 

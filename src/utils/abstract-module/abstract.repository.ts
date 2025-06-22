@@ -8,6 +8,8 @@ import {
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
+import { IAddResponse, IUpdateResponse, IDeleteResponse } from '@utils/index';
+
 import { AbstractEntity } from './abstract.entity';
 
 import { LoggerService } from '../logger/logger.service';
@@ -34,24 +36,10 @@ export abstract class AbstractRepository<
   async findOneRecord(
     findQuery: FindOneOptions<TEntity>,
   ): Promise<TEntity | undefined> {
-    this.logger.debug(
-      this.findOneRecord.name,
-      'Finding one record for find query',
-      findQuery,
-    );
+    const record = await this.findOne(findQuery);
+    if (!record) return undefined;
 
-    try {
-      const record = await this.findOne(findQuery);
-      if (!record) return undefined;
-
-      return record;
-    } catch (error) {
-      this.logger.error(
-        this.findOneRecord.name,
-        'Error finding one record',
-        error,
-      );
-    }
+    return record;
   }
 
   /**
@@ -62,109 +50,63 @@ export abstract class AbstractRepository<
   async findManyRecords(
     findQuery: FindManyOptions<TEntity>,
   ): Promise<TEntity[] | undefined> {
-    this.logger.debug(
-      this.findManyRecords.name,
-      'Finding many records for find query',
-      findQuery,
-    );
-
-    try {
-      return await this.find(findQuery);
-    } catch (error) {
-      this.logger.error(
-        this.findManyRecords.name,
-        'Error finding many records',
-        error,
-      );
-    }
+    return await this.find(findQuery);
   }
 
   /**
    * Create a record
    * @param input - Record
-   * @returns string - The identifier of the created record
+   * @returns IAddResponse - The identifier of the created record
    */
   async createRecord(
     input: QueryDeepPartialEntity<TEntity>,
-  ): Promise<string | undefined> {
-    this.logger.debug(this.createRecord.name, 'Creating record', input);
+  ): Promise<IAddResponse> {
+    const insertResult = await this.insert(input);
+    const id = insertResult.identifiers[0].id as string;
 
-    try {
-      const insertResult = await this.insert(input);
-      const identifier = insertResult.identifiers[0].id as string;
-
-      return identifier;
-    } catch (error) {
-      this.logger.error(this.createRecord.name, 'Error creating record', error);
-    }
+    return { id };
   }
 
   /**
    * Update a record
    * @param record - Record
    * @param updateFields - Update fields
-   * @returns boolean - The result of the update
+   * @returns IUpdateResponse - The result of the update
    */
   async updateRecord(
     record: TEntity,
     updateFields: QueryDeepPartialEntity<TEntity>,
-  ): Promise<boolean | undefined> {
-    this.logger.debug(this.updateRecord.name, 'Updating record', record.id);
+  ): Promise<IUpdateResponse> {
+    const updateResult = await this.update(record.id, updateFields);
+    if (!updateResult.affected) return false;
 
-    try {
-      const updateResult = await this.update(record.id, updateFields);
-      if (!updateResult.affected) return false;
-
-      return updateResult.affected > 0;
-    } catch (error) {
-      this.logger.error(this.updateRecord.name, 'Error updating record', error);
-    }
+    return updateResult.affected > 0;
   }
 
   /**
    * Soft remove a record
    * @param record - Record
-   * @returns boolean - The result of the soft removal
+   * @returns IDeleteResponse - The result of the soft removal
    */
   async softRemoveRecord(
     record: DeepPartial<TEntity>,
-  ): Promise<boolean | undefined> {
-    this.logger.debug(
-      this.softRemoveRecord.name,
-      'Soft removing record',
-      record.id,
-    );
+  ): Promise<IDeleteResponse> {
+    Object.assign(record, { deletedAt: new Date() });
+    await this.save(record);
 
-    try {
-      Object.assign(record, { deletedAt: new Date() });
-      await this.save(record);
+    const softRemoveResult = await this.softRemove(record);
 
-      const softRemoveResult = await this.softRemove(record);
-
-      return softRemoveResult.id === record.id;
-    } catch (error) {
-      this.logger.error(
-        this.softRemoveRecord.name,
-        'Error soft removing record',
-        error,
-      );
-    }
+    return softRemoveResult.id === record.id;
   }
 
   /**
    * Remove a record
    * @param record - Record
-   * @returns boolean - The result of the removal
+   * @returns IDeleteResponse - The result of the removal
    */
-  async removeRecord(record: TEntity): Promise<boolean | undefined> {
-    this.logger.debug(this.removeRecord.name, 'Removing record', record.id);
+  async removeRecord(record: TEntity): Promise<IDeleteResponse> {
+    const removeResult = await this.remove(record);
 
-    try {
-      const removeResult = await this.remove(record);
-
-      return removeResult.id === record.id;
-    } catch (error) {
-      this.logger.error(this.removeRecord.name, 'Error removing record', error);
-    }
+    return removeResult.id === record.id;
   }
 }

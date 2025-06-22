@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 
+import { AWSModule } from '@utils/aws/aws.module';
 import {
-  CacheModule,
-  ConfigModule,
   DatabaseConfigModule,
   LoggerModule,
   HttpExceptionFilterModule,
+  RedisModule,
+  ConfigModule,
+  CacheModule,
+  SwaggerSetupService,
 } from '@utils/index';
 
 import { AppController } from './app.controller';
@@ -24,8 +28,12 @@ import { UserModule } from '../modules/user/user.module';
     LoggerModule,
     CacheModule,
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
     DatabaseConfigModule,
     HttpExceptionFilterModule,
+    RedisModule,
+    AWSModule,
+
     RoleModule,
     UserModule,
     AuthModule,
@@ -33,6 +41,7 @@ import { UserModule } from '../modules/user/user.module';
   controllers: [AppController],
   providers: [
     AppService,
+    SwaggerSetupService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
   ],
