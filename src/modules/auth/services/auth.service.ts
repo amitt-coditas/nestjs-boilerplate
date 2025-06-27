@@ -69,14 +69,14 @@ export class AuthService {
     this.logger.debug(this.handleGoogleLogin.name, 'Handling Google login');
 
     try {
-      const { email, avatarUrl } = await this.googleService.verifyCredentials(
-        input.idToken,
-      );
+      const { ssoType, ssoId, email, avatarUrl } =
+        await this.googleService.verifyCredentials(input.idToken);
 
       const generateTokenInput: GenerateTokenDto = {
         ...input,
         email,
-        // ssoId,
+        ssoType,
+        ssoId,
       };
 
       const user = await this.userService.findOneOrThrowByEmail(email);
@@ -102,14 +102,14 @@ export class AuthService {
     this.logger.debug(this.handleAppleLogin.name, 'Handling Apple login');
 
     try {
-      const { email } = await this.appleService.verifyCredentials(
-        input.idToken,
-      );
+      const { ssoType, ssoId, email } =
+        await this.appleService.verifyCredentials(input.idToken);
 
       const generateTokenInput: GenerateTokenDto = {
         ...input,
         email,
-        // ssoId,
+        ssoType,
+        ssoId,
       };
 
       const user = await this.userService.findOneOrThrowByEmail(email);
@@ -135,14 +135,14 @@ export class AuthService {
     this.logger.debug(this.handleFacebookLogin.name, 'Handling Facebook login');
 
     try {
-      const { email, avatarUrl } = await this.facebookService.verifyCredentials(
-        input.idToken,
-      );
+      const { ssoType, ssoId, email, avatarUrl } =
+        await this.facebookService.verifyCredentials(input.idToken);
 
       const generateTokenInput: GenerateTokenDto = {
         ...input,
         email,
-        // ssoId,
+        ssoType,
+        ssoId,
       };
 
       const user = await this.userService.findOneOrThrowByEmail(email);
@@ -217,8 +217,17 @@ export class AuthService {
     //   await this.userTokenService.logout(existingToken.accessToken);
     // }
 
-    if (avatarUrl) {
-      await this.userService.update(user, { avatarUrl });
+    if (avatarUrl || input.ssoType) {
+      await this.userService.update(user, {
+        ...(avatarUrl && { avatarUrl }),
+        ...(input.ssoType &&
+          !user.ssoId?.[input.ssoType] && {
+            ssoId: {
+              ...user.ssoId,
+              [input.ssoType]: input.ssoId,
+            },
+          }),
+      });
     }
 
     const { accessToken, accessTokenExpiry, refreshToken, refreshTokenExpiry } =
@@ -229,13 +238,15 @@ export class AuthService {
       accessTokenExpiry,
       refreshToken,
       refreshTokenExpiry,
+      ssoType: input.ssoType,
+      os: input.os,
 
       // For later use in authentication
       // latitude: input.latitude,
       // longitude: input.longitude,
-      // os: input.os,
       // deviceId: input.deviceId,
       // fcmToken: input.fcmToken,
+
       user,
     });
 
@@ -317,6 +328,7 @@ export class AuthService {
 
       const generateTokensInput: GenerateTokenDto = {
         email: existingUserToken.user.email,
+        os: existingUserToken.os,
 
         // For later use in authentication
         // latitude: existingUserToken.latitude,

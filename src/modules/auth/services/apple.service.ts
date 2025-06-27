@@ -5,6 +5,7 @@ import JwksRsa from 'jwks-rsa';
 import { InternalServerException } from '@utils/exceptions';
 import { LoggerService } from '@utils/index';
 
+import { SSO_TYPES } from '../constants/sso-type.enum';
 import {
   AppleJWTPayload,
   SSOVerifyCredsResponseDto,
@@ -13,6 +14,7 @@ import {
 @Injectable()
 export class AppleService {
   private readonly logger: LoggerService;
+  private readonly ssoType: SSO_TYPES.APPLE;
 
   private readonly appleKeysUrl = 'https://appleid.apple.com/auth/keys';
 
@@ -55,6 +57,7 @@ export class AppleService {
       }) as AppleJWTPayload;
 
       return {
+        ssoType: this.ssoType,
         ssoId: payload.sub,
         email: payload.email,
       };

@@ -3,11 +3,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { AuthController } from './auth.controller';
+import { PasswordResetTokenRepository } from './repositories/password-reset-token.repository';
 import { UserTokenRepository } from './repositories/user-token.repository';
 import { AppleService } from './services/apple.service';
 import { AuthService } from './services/auth.service';
 import { FacebookService } from './services/facebook.service';
 import { GoogleService } from './services/google.service';
+import { PasswordResetTokenService } from './services/password-reset-token.service';
 import { UserTokenService } from './services/user-token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -24,8 +26,10 @@ import { UserModule } from '../user/user.module';
     GoogleService,
     AppleService,
     FacebookService,
+    PasswordResetTokenRepository,
+    PasswordResetTokenService,
   ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, UserTokenService],
 })
 export class AuthModule {}

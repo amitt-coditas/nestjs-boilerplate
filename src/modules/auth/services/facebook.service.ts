@@ -4,6 +4,7 @@ import axios from 'axios';
 import { InternalServerException } from '@utils/exceptions';
 import { LoggerService } from '@utils/index';
 
+import { SSO_TYPES } from '../constants/sso-type.enum';
 import {
   FacebookPayload,
   SSOVerifyCredsResponseDto,
@@ -12,6 +13,7 @@ import {
 @Injectable()
 export class FacebookService {
   private readonly logger: LoggerService;
+  private readonly ssoType: SSO_TYPES.FACEBOOK;
 
   private readonly facebookUrl = 'https://graph.facebook.com/me';
   private readonly facebookFields = 'id,first_name,last_name,email,picture';
@@ -47,6 +49,7 @@ export class FacebookService {
       }
 
       return {
+        ssoType: this.ssoType,
         ssoId,
         email,
         avatarUrl,

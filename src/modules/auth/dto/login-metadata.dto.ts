@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
+
+import { OS_TYPES } from '@utils/index';
 
 export class LoginMetadataDto {
   @ApiProperty({
@@ -9,6 +11,14 @@ export class LoginMetadataDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  @ApiProperty({
+    description: 'The OS of the user',
+    example: 'ios',
+  })
+  @IsEnum(OS_TYPES)
+  @IsNotEmpty()
+  os: OS_TYPES;
 
   // For later authentication
   // @ApiProperty({
@@ -34,14 +44,6 @@ export class LoginMetadataDto {
   // @IsString()
   // @IsNotEmpty()
   // deviceId: string;
-
-  // @ApiProperty({
-  //   description: 'The OS of the user',
-  //   example: 'ios',
-  // })
-  // @IsEnum(OS_TYPES)
-  // @IsNotEmpty()
-  // os: OS_TYPES;
 
   // @ApiProperty({
   //   description: 'The FCM token of the user',

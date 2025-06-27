@@ -23,7 +23,7 @@ export class SESService {
       ENV_KEYS.AWS_SECRET_KEY,
     );
     this.sourceMail = this.configService.getOrThrow<string>(
-      ENV_KEYS.SOURCE_MAIL,
+      ENV_KEYS.AWS_SES_SOURCE_MAIL,
     );
 
     this.sesClient = new SESClient({
@@ -42,9 +42,14 @@ export class SESService {
    * @param body - Body
    * @returns MessageId
    */
-  async sendMail(email: string, subject: string, body: string) {
-    this.logger.debug(this.sendMail.name, 'Sending mail', {
-      email,
+  async sendMailFromSpecificSource(
+    email: string,
+    subject: string,
+    body: string,
+  ) {
+    this.logger.debug(this.sendMailFromSpecificSource.name, 'Sending mail', {
+      sourceMail: this.sourceMail,
+      toEmail: email,
     });
 
     try {
@@ -70,9 +75,13 @@ export class SESService {
 
       return MessageId;
     } catch (error: unknown) {
-      this.logger.error(this.sendMail.name, 'Error sending mail', {
-        error,
-      });
+      this.logger.error(
+        this.sendMailFromSpecificSource.name,
+        'Error sending mail',
+        {
+          error,
+        },
+      );
       throw new InternalServerException('Error sending mail');
     }
   }

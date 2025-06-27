@@ -7,11 +7,14 @@ import {
 } from '@utils/exceptions';
 import { LoggerService } from '@utils/index';
 
+import { SSO_TYPES } from '../constants/sso-type.enum';
 import { SSOVerifyCredsResponseDto } from '../dto/sso-response.dto';
 
 @Injectable()
 export class GoogleService {
   private readonly logger: LoggerService;
+  private readonly ssoType: SSO_TYPES.GOOGLE;
+
   private readonly googleAuthClientIds: string[];
   private readonly googleAuthClient: OAuth2Client;
 
@@ -60,6 +63,7 @@ export class GoogleService {
       }
 
       return {
+        ssoType: this.ssoType,
         ssoId: profile.sub.trim(),
         email: profile.email,
         avatarUrl: profile.picture,

@@ -39,10 +39,14 @@ const ENV_SCHEMA = {
   AWS_REGION: joi.string().required(),
   AWS_ACCESS_KEY: joi.string().required(),
   AWS_SECRET_KEY: joi.string().required(),
-  AWS_BUCKET: joi.string().required(),
-  SOURCE_MAIL: joi.string().required(),
 
-  // For later use
+  AWS_BUCKET: joi.string().required(),
+  AWS_BUCKET_PROFILE_PICTURES: joi.string().required(),
+  AWS_SES_SOURCE_MAIL: joi.string().required(),
+
+  FE_BASE_URL: joi.string().required(),
+
+  // For Redis Configuration
   // REDIS_HOST: joi.string().required(),
   // REDIS_PORT: joi.number().required(),
   // REDIS_USERNAME: joi.string().required(),
