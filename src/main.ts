@@ -17,7 +17,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get<ConfigService>(ConfigService);
   const port = configService.get<number>(ENV_KEYS.PORT) || 3000;
-  const logger = LoggerService.forClass('Bootstrap');
+  const logger = LoggerService.forClass('');
   // const env = configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
 
   const filter = app.get(GlobalHttpExceptionFilter);
