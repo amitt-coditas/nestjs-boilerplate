@@ -1,16 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 import { OS_TYPES } from '@utils/index';
 
+import { LOGIN_TYPE } from '../constants/login-type.enum';
+
 export class LoginMetadataDto {
   @ApiProperty({
-    description: 'The email of the user',
-    example: 'test@test.com',
+    description: 'The login type',
+    example: LOGIN_TYPE.GOOGLE,
   })
-  @IsEmail()
+  @IsEnum(LOGIN_TYPE)
   @IsNotEmpty()
-  email: string;
+  loginType: LOGIN_TYPE;
+
+  @ApiProperty({
+    description: 'The latitude of the user',
+    example: 123.456,
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  latitude: number;
+
+  @ApiProperty({
+    description: 'The longitude of the user',
+    example: 123.456,
+  })
+  @IsNumber()
+  @IsNotEmpty()
+  longitude: number;
+
+  @ApiProperty({
+    description: 'The device ID of the user',
+    example: '1234567890',
+  })
+  @IsString()
+  @IsNotEmpty()
+  deviceId: string;
 
   @ApiProperty({
     description: 'The OS of the user',
@@ -19,31 +45,6 @@ export class LoginMetadataDto {
   @IsEnum(OS_TYPES)
   @IsNotEmpty()
   os: OS_TYPES;
-
-  // For later authentication
-  // @ApiProperty({
-  //   description: 'The latitude of the user',
-  //   example: 123.456,
-  // })
-  // @IsNumber()
-  // @IsNotEmpty()
-  // latitude: number;
-
-  // @ApiProperty({
-  //   description: 'The longitude of the user',
-  //   example: 123.456,
-  // })
-  // @IsNumber()
-  // @IsNotEmpty()
-  // longitude: number;
-
-  // @ApiProperty({
-  //   description: 'The device ID of the user',
-  //   example: '1234567890',
-  // })
-  // @IsString()
-  // @IsNotEmpty()
-  // deviceId: string;
 
   // @ApiProperty({
   //   description: 'The FCM token of the user',

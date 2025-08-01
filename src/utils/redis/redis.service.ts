@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
-import { InternalServerException } from '@utils/exceptions';
 import { LoggerService } from '@utils/index';
 
 @Injectable()
@@ -45,8 +44,11 @@ export class RedisService {
     try {
       return await this.redisClient.get(key);
     } catch (error) {
-      this.logger.error(this.get.name, 'Error getting value for key', error);
-      throw new InternalServerException('Failed to get value from Redis');
+      this.logger.throwServiceError(
+        this.get.name,
+        error,
+        'Error getting value for key',
+      );
     }
   }
 
@@ -62,8 +64,11 @@ export class RedisService {
     try {
       return await this.redisClient.set(key, value);
     } catch (error) {
-      this.logger.error(this.set.name, 'Error setting value for key', error);
-      throw new InternalServerException('Failed to set value in Redis');
+      this.logger.throwServiceError(
+        this.set.name,
+        error,
+        'Error setting value for key',
+      );
     }
   }
 
@@ -83,13 +88,10 @@ export class RedisService {
     try {
       return await this.redisClient.setex(key, seconds, value);
     } catch (error) {
-      this.logger.error(
+      this.logger.throwServiceError(
         this.setex.name,
-        'Error setting value with expiration for key',
         error,
-      );
-      throw new InternalServerException(
-        'Failed to set value with expiration in Redis',
+        'Error setting value with expiration for key',
       );
     }
   }
@@ -105,8 +107,11 @@ export class RedisService {
     try {
       return await this.redisClient.del(key);
     } catch (error) {
-      this.logger.error(this.del.name, 'Error deleting key', error);
-      throw new InternalServerException('Failed to delete key from Redis');
+      this.logger.throwServiceError(
+        this.del.name,
+        error,
+        'Failed to delete key',
+      );
     }
   }
 
@@ -122,8 +127,11 @@ export class RedisService {
     try {
       return await this.redisClient.ttl(key);
     } catch (error) {
-      this.logger.error(this.ttl.name, 'Error getting TTL for key', error);
-      throw new InternalServerException('Failed to get TTL from Redis');
+      this.logger.throwServiceError(
+        this.ttl.name,
+        error,
+        'Failed to get TTL from Redis',
+      );
     }
   }
 }

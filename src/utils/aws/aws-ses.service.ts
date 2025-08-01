@@ -3,7 +3,6 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { InternalServerException } from '@utils/exceptions';
 import { ENV_KEYS, LoggerService } from '@utils/index';
 
 @Injectable()
@@ -35,21 +34,10 @@ export class SESService {
     });
   }
 
-  /**
-   * Send mail
-   * @param email - Email
-   * @param subject - Subject
-   * @param body - Body
-   * @returns MessageId
-   */
-  async sendMailFromSpecificSource(
-    email: string,
-    subject: string,
-    body: string,
-  ) {
-    this.logger.debug(this.sendMailFromSpecificSource.name, 'Sending mail', {
-      sourceMail: this.sourceMail,
-      toEmail: email,
+  async sendMail(email: string, subject: string, body: string) {
+    this.logger.debug(this.sendMail.name, 'Sending mail', {
+      email,
+      subject,
     });
 
     try {
@@ -75,14 +63,11 @@ export class SESService {
 
       return MessageId;
     } catch (error: unknown) {
-      this.logger.error(
-        this.sendMailFromSpecificSource.name,
+      this.logger.throwServiceError(
+        this.sendMail.name,
+        error,
         'Error sending mail',
-        {
-          error,
-        },
       );
-      throw new InternalServerException('Error sending mail');
     }
   }
 }

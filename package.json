@@ -6,6 +6,11 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "env:dev-local": "cp .env.dev.local .env",
+    "env:dev": "cp .env.dev .env",
+    "env:qa": "cp .env.qa .env",
+    "env:staging": "cp .env.staging .env",
+    "env:prod": "cp .env.prod .env",
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -62,6 +67,7 @@
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
+    "twilio": "^5.8.0",
     "typeorm": "^0.3.22",
     "uuid": "^11.1.0"
   },

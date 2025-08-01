@@ -1,6 +1,16 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import {
+  InternalServerException,
+  ValidationException,
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+  NotFoundException,
+  ConflictException,
+} from '@utils/exceptions';
+
 import { ENV_KEYS, NODE_ENV } from '../config/config.module';
 import { LogContext } from '../types/app.types';
 
@@ -100,6 +110,35 @@ export class LoggerService {
     const context = this.createContext(methodName);
     const formattedMessage = this.formatMessage(message, parameters);
     this.logger.debug(formattedMessage, JSON.stringify(context));
+  }
+
+  /**
+   * Throw a service error
+   * @param methodName - The method name
+   * @param error - The error to throw
+   * @param defaultMessage - The default message to throw
+   * @returns Never returns, always throws
+   */
+  throwServiceError(
+    methodName: string,
+    error: unknown,
+    defaultMessage = 'An unexpected error occurred',
+  ): never {
+    this.error(methodName, defaultMessage, error);
+
+    if (
+      error instanceof BadRequestException ||
+      error instanceof ForbiddenException ||
+      error instanceof UnauthorizedException ||
+      error instanceof NotFoundException ||
+      error instanceof ConflictException ||
+      error instanceof ValidationException ||
+      error instanceof InternalServerException
+    ) {
+      throw error;
+    }
+
+    throw new InternalServerException(defaultMessage);
   }
 
   /**

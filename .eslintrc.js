@@ -89,4 +89,28 @@ module.exports = {
     'no-throw-literal': 'error',
     'prettier/prettier': 'error',
   },
+  overrides: [
+    {
+      files: ['**/*.controller.ts'],
+      rules: {
+        '@typescript-eslint/no-floating-promises': 'off', // Allow promises to be returned directly in controllers
+        '@typescript-eslint/await-thenable': 'off', // Allow returning promises without await in controllers
+        '@typescript-eslint/require-await': 'error', // Prevent async functions that don't use await
+        '@typescript-eslint/no-misused-promises': 'off', // Allow promises in non-async functions for controllers
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: 'FunctionDeclaration[async=true]',
+            message:
+              'Async functions are not allowed in controllers. Return promises directly instead.',
+          },
+          {
+            selector: 'MethodDefinition[value.async=true]',
+            message:
+              'Async methods are not allowed in controllers. Return promises directly instead.',
+          },
+        ],
+      },
+    },
+  ],
 };

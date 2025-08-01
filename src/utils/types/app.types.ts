@@ -1,6 +1,6 @@
 import { ParsedQs } from 'qs';
 
-import { TIMEZONE } from '../constants/app.constants';
+import { TIMEZONE } from '../constants/app.constant';
 
 export interface LogContext {
   className: string;

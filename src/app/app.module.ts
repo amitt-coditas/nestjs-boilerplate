@@ -12,6 +12,7 @@ import {
   ConfigModule,
   CacheModule,
   SwaggerSetupService,
+  TwilioModule,
 } from '@utils/index';
 
 import { AppController } from './app.controller';
@@ -33,7 +34,9 @@ import { UserModule } from '../modules/user/user.module';
     HttpExceptionFilterModule,
     RedisModule,
     AWSModule,
+    TwilioModule,
 
+    // Modules
     RoleModule,
     UserModule,
     AuthModule,

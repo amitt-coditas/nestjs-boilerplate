@@ -1,26 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { FindManyOptions, FindOneOptions, FindOptionsWhere } from 'typeorm';
+import {
+  DeepPartial,
+  FindManyOptions,
+  FindOneOptions,
+  FindOptionsWhere,
+} from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import {
-  IAddResponse,
-  IDeleteResponse,
+  ICreateResponse,
+  IRemoveResponse,
   IPaginatedListAPIResponse,
   IUpdateResponse,
-  BaseFiltersDto,
+  IListAPIResponse,
+  IPaginationOptions,
 } from '@utils/index';
 
 import { AbstractEntity } from './abstract.entity';
 import { AbstractRepository } from './abstract.repository';
 
-import {
-  NotFoundException,
-  InternalServerException,
-  ConflictException,
-} from '../exceptions';
+import { NotFoundException, ConflictException } from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
 
-@Injectable()
 export abstract class AbstractService<
   TEntity extends AbstractEntity,
   TRepository extends AbstractRepository<TEntity>,
@@ -41,7 +41,7 @@ export abstract class AbstractService<
    */
   async findManyWithPagination(
     findQuery: FindManyOptions<TEntity>,
-    options?: BaseFiltersDto,
+    options?: IPaginationOptions,
   ): Promise<IPaginatedListAPIResponse<TEntity>> {
     this.logger.debug(
       this.findManyWithPagination.name,
@@ -49,55 +49,46 @@ export abstract class AbstractService<
       findQuery,
     );
 
-    try {
-      const page = options?.page ?? 1;
-      const limit = options?.limit ?? 10;
-      const skip = (page - 1) * limit;
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const skip = (page - 1) * limit;
 
-      const paginatedQuery: FindManyOptions<TEntity> = {
-        ...findQuery,
-        skip,
-        take: limit,
-      };
+    const paginatedQuery: FindManyOptions<TEntity> = {
+      ...findQuery,
+      skip,
+      take: limit,
+    };
 
-      const totalCount = await this.repository.count(findQuery);
-      const records = await this.repository.findManyRecords(paginatedQuery);
+    const totalUnPaginatedCount = await this.repository.count(findQuery);
+    const { records, totalCount: totalPaginatedCount } =
+      await this.repository.findManyRecords(paginatedQuery);
 
-      return {
-        records: records || [],
-        totalCount,
-        page,
-        limit,
-        totalPages: Math.ceil(totalCount / limit),
-      };
-    } catch (error) {
-      this.logger.error(
-        this.findManyWithPagination.name,
-        'Error finding records:',
-        error,
-      );
-      throw new InternalServerException('Error finding records');
-    }
+    return {
+      records,
+      totalCount: totalPaginatedCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalUnPaginatedCount / limit),
+    };
   }
 
   /**
    * Find many records
    * @param findQuery - Find query
-   * @returns TEntity[] - The array of records
+   * @returns IListAPIResponse<TEntity> - The array of records
    */
-  async findMany(findQuery: FindManyOptions<TEntity>): Promise<TEntity[]> {
+  async findMany(
+    findQuery: FindManyOptions<TEntity>,
+  ): Promise<IListAPIResponse<TEntity>> {
     this.logger.debug(
       this.findMany.name,
       'Finding records with query:',
       findQuery,
     );
 
-    try {
-      return await this.repository.find(findQuery);
-    } catch (error) {
-      this.logger.error(this.findMany.name, 'Error finding records:', error);
-      throw new InternalServerException('Error finding records');
-    }
+    const response = await this.repository.findManyRecords(findQuery);
+
+    return response;
   }
 
   /**
@@ -114,14 +105,9 @@ export abstract class AbstractService<
       findQuery,
     );
 
-    try {
-      const record = await this.repository.findOneRecord(findQuery);
+    const record = await this.repository.findOneRecord(findQuery);
 
-      return record;
-    } catch (error) {
-      this.logger.error(this.findOne.name, 'Error finding one record:', error);
-      throw new InternalServerException('Error finding one record');
-    }
+    return record;
   }
 
   /**
@@ -136,20 +122,10 @@ export abstract class AbstractService<
       findQuery,
     );
 
-    try {
-      const result = await this.repository.findOne(findQuery);
+    const record = await this.repository.findOneRecord(findQuery);
+    if (!record) throw new NotFoundException(this.tableName);
 
-      if (!result) throw new NotFoundException(this.tableName);
-
-      return result;
-    } catch (error) {
-      this.logger.error(
-        this.findOneOrThrow.name,
-        'Error finding one record:',
-        error,
-      );
-      throw new InternalServerException('Error finding one record');
-    }
+    return record;
   }
 
   /**
@@ -160,20 +136,13 @@ export abstract class AbstractService<
   async findOneById(id: string): Promise<TEntity | undefined> {
     this.logger.debug(this.findOneById.name, 'Finding one record by id:', id);
 
-    try {
-      return await this.repository.findOneRecord({
-        where: {
-          id,
-        } as FindOptionsWhere<TEntity>,
-      });
-    } catch (error) {
-      this.logger.error(
-        this.findOneById.name,
-        'Error finding one record by id:',
-        error,
-      );
-      throw new InternalServerException('Error finding one record');
-    }
+    const record = await this.repository.findOneRecord({
+      where: {
+        id,
+      } as FindOptionsWhere<TEntity>,
+    });
+
+    return record;
   }
 
   /**
@@ -188,45 +157,29 @@ export abstract class AbstractService<
       id,
     );
 
-    try {
-      const result = await this.repository.findOneRecord({
-        where: {
-          id,
-        } as FindOptionsWhere<TEntity>,
-      });
+    const record = await this.repository.findOneRecord({
+      where: {
+        id,
+      } as FindOptionsWhere<TEntity>,
+    });
+    if (!record) throw new NotFoundException(this.tableName);
 
-      if (!result) throw new NotFoundException(this.tableName);
-
-      return result;
-    } catch (error) {
-      this.logger.error(
-        this.findOneByIdOrThrow.name,
-        'Error finding one record by id:',
-        error,
-      );
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerException('Error finding one record');
-    }
+    return record;
   }
 
   /**
    * Create a record
    * @param data - The data of the record
-   * @returns IAddResponse - The identifier of the created record
+   * @returns ICreateResponse - The identifier of the created record
    */
-  async create(data: QueryDeepPartialEntity<TEntity>): Promise<IAddResponse> {
+  async create(data: DeepPartial<TEntity>): Promise<ICreateResponse> {
     this.logger.debug(this.create.name, 'Creating record with data:', data);
 
-    try {
-      const id = await this.repository.createRecord(data);
-      if (!id) throw new ConflictException('Error creating record');
+    const createResponse = await this.repository.createRecord(data);
+    if (!createResponse.id)
+      throw new ConflictException(`Error creating record in ${this.tableName}`);
 
-      return id;
-    } catch (error) {
-      this.logger.error(this.create.name, 'Error creating record:', error);
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error creating record');
-    }
+    return createResponse;
   }
 
   /**
@@ -241,62 +194,44 @@ export abstract class AbstractService<
   ): Promise<IUpdateResponse> {
     this.logger.debug(this.update.name, `Updating record ${entity.id}`, data);
 
-    try {
-      const result = await this.repository.updateRecord(entity, data);
-      if (!result) throw new ConflictException('Error updating record');
+    const updateResponse = await this.repository.updateRecord(entity, data);
+    if (!updateResponse.status)
+      throw new ConflictException(`Error updating record in ${this.tableName}`);
 
-      return result;
-    } catch (error) {
-      this.logger.error(this.update.name, 'Error updating record:', error);
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error updating record');
-    }
+    return updateResponse;
   }
 
   /**
    * Soft remove a record
    * @param entity - The entity of the record
-   * @returns IDeleteResponse - The result of the soft removal
+   * @returns IRemoveResponse - The result of the soft removal
    */
-  async softRemove(entity: TEntity): Promise<IDeleteResponse> {
+  async softRemove(entity: TEntity): Promise<IRemoveResponse> {
     this.logger.debug(
       this.softRemove.name,
       `Soft removing record ${entity.id}`,
     );
-
-    try {
-      const result = await this.repository.softRemoveRecord(entity);
-      if (!result) throw new ConflictException('Error soft removing record');
-
-      return result;
-    } catch (error) {
-      this.logger.error(
-        this.softRemove.name,
-        'Error soft removing record:',
-        error,
+    const removeResponse = await this.repository.softRemoveRecord(entity);
+    if (!removeResponse.status)
+      throw new ConflictException(
+        `Error soft removing record in ${this.tableName}`,
       );
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error soft removing record');
-    }
+
+    return removeResponse;
   }
 
   /**
    * Remove a record
    * @param entity - The entity of the record
-   * @returns IDeleteResponse - The result of the removal
+   * @returns IRemoveResponse - The result of the removal
    */
-  async remove(entity: TEntity): Promise<IDeleteResponse> {
+  async remove(entity: TEntity): Promise<IRemoveResponse> {
     this.logger.debug(this.remove.name, `Removing record ${entity.id}`);
 
-    try {
-      const result = await this.repository.removeRecord(entity);
-      if (!result) throw new ConflictException('Error removing record');
+    const removeResponse = await this.repository.removeRecord(entity);
+    if (!removeResponse.status)
+      throw new ConflictException(`Error removing record in ${this.tableName}`);
 
-      return result;
-    } catch (error) {
-      this.logger.error(this.remove.name, 'Error removing record:', error);
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error removing record');
-    }
+    return removeResponse;
   }
 }

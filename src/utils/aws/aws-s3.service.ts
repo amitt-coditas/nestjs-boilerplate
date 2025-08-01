@@ -10,7 +10,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { ConflictException, InternalServerException } from '@utils/exceptions';
+import { ConflictException } from '@utils/exceptions';
 import { ENV_KEYS, LoggerService } from '@utils/index';
 
 @Injectable()
@@ -57,10 +57,7 @@ export class S3Service {
 
       return [];
     } catch (error: unknown) {
-      this.logger.error(this.listAllBuckets.name, 'Error listing all buckets', {
-        error,
-      });
-      throw new InternalServerException('Error listing all buckets');
+      this.logger.throwServiceError(this.listAllBuckets.name, error);
     }
   }
 
@@ -69,7 +66,7 @@ export class S3Service {
    * @param bucket - The bucket to list the files in
    * @returns The files
    */
-  async listAllFiles(bucket: string): Promise<{ key: string; url: string }[]> {
+  async listAllFiles(bucket: string) {
     this.logger.debug(this.listAllFiles.name, 'Listing all files', {
       bucket,
     });
@@ -88,59 +85,22 @@ export class S3Service {
       }
       if (!response.Contents) return [];
 
-      const files = response.Contents?.map((file) => ({
-        key: file.Key as string,
-        url: this.getS3Url(bucket, file.Key as string),
-      }));
+      const files = response.Contents?.map((file) => {
+        const key = file.Key as string;
+
+        return {
+          key,
+          url: this.getObjectGlobalUrl(bucket, key),
+        };
+      });
 
       return files;
     } catch (error: unknown) {
-      this.logger.error(this.listAllFiles.name, 'Error listing all files', {
+      this.logger.throwServiceError(
+        this.listAllFiles.name,
         error,
-      });
-      throw new InternalServerException('Error listing all files');
-    }
-  }
-
-  /**
-   * List files in a folder
-   * @param bucket - The bucket of the folder
-   * @param folder - The folder to list the files in
-   * @returns The files
-   */
-  async listFilesInFolder(
-    bucket: string,
-    folder: string,
-  ): Promise<{ key: string; url: string }[]> {
-    this.logger.debug(this.listFilesInFolder.name, 'Listing files in folder', {
-      bucket,
-      folder,
-    });
-
-    try {
-      const command = new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: folder,
-      });
-
-      const response = await this.s3Client.send(command);
-      if (!response.Contents) {
-        return [];
-      }
-
-      const files = response.Contents?.map((file) => ({
-        key: file.Key as string,
-        url: this.getS3Url(bucket, file.Key as string),
-      }));
-
-      return files;
-    } catch (error: unknown) {
-      this.logger.error(
-        this.listFilesInFolder.name,
-        'Error listing files in folder',
-        { error },
+        'Error listing all files',
       );
-      throw new InternalServerException('Error listing files in folder');
     }
   }
 
@@ -180,7 +140,7 @@ export class S3Service {
       ) {
         throw new ConflictException('Error uploading file');
       }
-      const url = this.getS3Url(bucket, key);
+      const url = this.getObjectGlobalUrl(bucket, key);
 
       return {
         key,
@@ -188,11 +148,11 @@ export class S3Service {
         bucket,
       };
     } catch (error: unknown) {
-      this.logger.error(this.uploadFile.name, 'Error uploading file', {
+      this.logger.throwServiceError(
+        this.uploadFile.name,
         error,
-      });
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error uploading file');
+        'Error uploading file',
+      );
     }
   }
 
@@ -227,11 +187,11 @@ export class S3Service {
         bucket,
       };
     } catch (error: unknown) {
-      this.logger.error(this.deleteFile.name, 'Error deleting file', {
+      this.logger.throwServiceError(
+        this.deleteFile.name,
         error,
-      });
-      if (error instanceof ConflictException) throw error;
-      throw new InternalServerException('Error deleting file');
+        'Error deleting file',
+      );
     }
   }
 
@@ -259,18 +219,55 @@ export class S3Service {
 
       return url;
     } catch (error: unknown) {
-      this.logger.error(
+      this.logger.throwServiceError(
         this.getPresignedUrl.name,
+        error,
         'Error getting presigned url',
-        {
-          error,
-        },
       );
-      throw new InternalServerException('Error getting presigned url');
     }
   }
 
-  private getS3Url(bucket: string, key: string) {
+  /**
+   * List files in a folder
+   * @param bucket - The bucket of the folder
+   * @param folder - The folder to list the files in
+   * @returns The files
+   */
+  async listFilesInFolder(bucket: string, folder: string): Promise<string[]> {
+    this.logger.debug(this.listFilesInFolder.name, 'Listing files in folder', {
+      bucket,
+      folder,
+    });
+
+    try {
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: folder,
+      });
+
+      const response = await this.s3Client.send(command);
+      if (!response.Contents) {
+        return [];
+      }
+
+      const fileKeys = response.Contents.map((file) => file.Key as string);
+      return fileKeys;
+    } catch (error: unknown) {
+      this.logger.throwServiceError(
+        this.listFilesInFolder.name,
+        error,
+        'Error listing files in folder',
+      );
+    }
+  }
+
+  /**
+   * Get the file url
+   * @param bucket - The bucket of the file
+   * @param key - The key of the file
+   * @returns The file url
+   */
+  getObjectGlobalUrl(bucket: string, key: string): string {
     return `https://${bucket}.s3.${this.awsRegion}.amazonaws.com/${key}`;
   }
 }

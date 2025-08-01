@@ -13,7 +13,12 @@ import { ConfigService } from '@nestjs/config';
 import { SwaggerModule } from '@nestjs/swagger';
 
 import { NODE_ENV } from '@utils/config/config.module';
-import { LoggerService, OS_TYPES, ENV_KEYS } from '@utils/index';
+import {
+  LoggerService,
+  OS_TYPES,
+  OVERRIDE_INVITATION_KEY,
+  ENV_KEYS,
+} from '@utils/index';
 
 import { swaggerConfig, swaggerCustomOptions } from './swagger.config';
 
@@ -60,6 +65,11 @@ export class SwaggerSetupService {
           if (operation && typeof operation === 'object') {
             const operationObject = operation;
 
+            const hasOverrideInvitation = Reflect.getMetadata(
+              OVERRIDE_INVITATION_KEY,
+              operationObject,
+            ) as boolean;
+
             const parameters: ParameterObject[] = [
               // Header: Operating system
               {
@@ -73,6 +83,30 @@ export class SwaggerSetupService {
                 description: 'Operating system',
               },
             ];
+
+            const hasInviteParameter = operationObject.parameters?.some(
+              (param) =>
+                'name' in param &&
+                'in' in param &&
+                param.name === 'invite' &&
+                param.in === 'query',
+            );
+
+            if (!hasInviteParameter && !hasOverrideInvitation && !this.isDev) {
+              parameters.push(
+                // Query: Guest invitation token
+                {
+                  name: 'invite',
+                  in: 'query',
+                  required: false,
+                  schema: {
+                    type: 'string',
+                  },
+                  description:
+                    'Guest invitation token (required for web requests only)',
+                },
+              );
+            }
 
             operationObject.parameters = [
               ...(operationObject.parameters || []),

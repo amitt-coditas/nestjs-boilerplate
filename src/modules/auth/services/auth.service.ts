@@ -1,30 +1,34 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-// eslint-disable-next-line import/no-unresolved
-import { compare, hash } from 'bcrypt';
+import { DeepPartial } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 import {
   BadRequestException,
-  InternalServerException,
+  ConflictException,
   UnauthorizedException,
 } from '@utils/exceptions';
 import { ENV_KEYS, LoggerService } from '@utils/index';
 
-import { AppleService } from './apple.service';
-import { FacebookService } from './facebook.service';
-import { GoogleService } from './google.service';
+import { PasswordService } from './password.service';
 import { UserTokenService } from './user-token.service';
 
 import { ROLES } from '../../role/constants/roles.enum';
 import { RoleService } from '../../role/role.service';
 import { User } from '../../user/entities/user.entity';
 import { UserService } from '../../user/services/user.service';
-import { GenerateTokenDto } from '../dto/generate-token.dto';
-import { LoginBodyDto, SSOLoginBodyDto } from '../dto/login-body.dto';
-import { RegisterDto } from '../dto/register.dto';
-import { TokenPayloadDto } from '../dto/token-payload.dto';
-import { UserToken } from '../entities/user-token.entity';
+import { LOGIN_TYPE } from '../constants/login-type.enum';
+import {
+  RegisterRequestDto,
+  GenerateTokenDto,
+  TokenPayloadDto,
+  LoginRequestDto,
+  LoginResponseDto,
+  RegisterResponseDto,
+  GenerateAccessTokenResponseDto,
+  RegisterAfterSocialLoginRequestDto,
+} from '../dto';
 
 @Injectable()
 export class AuthService {
@@ -37,12 +41,10 @@ export class AuthService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly passwordService: PasswordService,
     private readonly userService: UserService,
     private readonly userTokenService: UserTokenService,
     private readonly jwtService: JwtService,
-    private readonly googleService: GoogleService,
-    private readonly appleService: AppleService,
-    private readonly facebookService: FacebookService,
     private readonly roleService: RoleService,
   ) {
     this.logger = LoggerService.forClass(this.constructor.name);
@@ -61,110 +63,13 @@ export class AuthService {
   }
 
   /**
-   * Handles Google login
-   * @param input - Google login input
-   * @returns UserToken
+   * Handles the credentials login process
+   * @param input - The login request data
+   * @returns The login response data
    */
-  async handleGoogleLogin(input: SSOLoginBodyDto) {
-    this.logger.debug(this.handleGoogleLogin.name, 'Handling Google login');
-
-    try {
-      const { ssoType, ssoId, email, avatarUrl } =
-        await this.googleService.verifyCredentials(input.idToken);
-
-      const generateTokenInput: GenerateTokenDto = {
-        ...input,
-        email,
-        ssoType,
-        ssoId,
-      };
-
-      const user = await this.userService.findOneOrThrowByEmail(email);
-
-      return this.login(generateTokenInput, user, avatarUrl);
-    } catch (error) {
-      this.logger.error(
-        this.handleGoogleLogin.name,
-        'Error logging in with Google',
-        error,
-      );
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerException('Error logging in with Google');
-    }
-  }
-
-  /**
-   * Handles Apple login
-   * @param input - Apple login input
-   * @returns UserToken
-   */
-  async handleAppleLogin(input: SSOLoginBodyDto) {
-    this.logger.debug(this.handleAppleLogin.name, 'Handling Apple login');
-
-    try {
-      const { ssoType, ssoId, email } =
-        await this.appleService.verifyCredentials(input.idToken);
-
-      const generateTokenInput: GenerateTokenDto = {
-        ...input,
-        email,
-        ssoType,
-        ssoId,
-      };
-
-      const user = await this.userService.findOneOrThrowByEmail(email);
-
-      return this.login(generateTokenInput, user);
-    } catch (error) {
-      this.logger.error(
-        this.handleAppleLogin.name,
-        'Database error while handling Apple login',
-        error,
-      );
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerException('Error logging in with Apple');
-    }
-  }
-
-  /**
-   * Handles Facebook login
-   * @param input - Facebook login input
-   * @returns UserToken
-   */
-  async handleFacebookLogin(input: SSOLoginBodyDto) {
-    this.logger.debug(this.handleFacebookLogin.name, 'Handling Facebook login');
-
-    try {
-      const { ssoType, ssoId, email, avatarUrl } =
-        await this.facebookService.verifyCredentials(input.idToken);
-
-      const generateTokenInput: GenerateTokenDto = {
-        ...input,
-        email,
-        ssoType,
-        ssoId,
-      };
-
-      const user = await this.userService.findOneOrThrowByEmail(email);
-
-      return this.login(generateTokenInput, user, avatarUrl);
-    } catch (error) {
-      this.logger.error(
-        this.handleFacebookLogin.name,
-        'Database error while handling Facebook login',
-        error,
-      );
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerException('Error logging in with Facebook');
-    }
-  }
-
-  /**
-   * Handles credentials login
-   * @param input - Credentials login input
-   * @returns UserToken
-   */
-  async handleCredentialsLogin(input: LoginBodyDto): Promise<UserToken> {
+  async handleCredentialsLogin(
+    input: LoginRequestDto,
+  ): Promise<LoginResponseDto> {
     this.logger.debug(
       this.handleCredentialsLogin.name,
       'Logging in with email and password',
@@ -172,136 +77,198 @@ export class AuthService {
     );
 
     try {
-      const user = await this.userService.findOneOrThrowByEmail(input.email);
+      const user = await this.userService.findUserByEmailOrPhone(
+        input.emailOrPhone,
+      );
 
-      const isPasswordValid = await compare(input.password, user.password);
+      const isPasswordValid = await this.passwordService.comparePassword(
+        input.password,
+        user.password,
+      );
       if (!isPasswordValid) {
-        throw new BadRequestException('Invalid password');
+        throw new BadRequestException('Invalid password. Please try again!');
       }
 
       const generateTokenInput: GenerateTokenDto = {
-        ...input,
-        email: input.email,
+        loginType: LOGIN_TYPE.CREDENTIALS,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        deviceId: input.deviceId,
+        os: input.os,
+        user,
       };
 
-      return this.login(generateTokenInput, user);
+      return this.login(generateTokenInput);
     } catch (error) {
-      this.logger.error(
+      this.logger.throwServiceError(
         this.handleCredentialsLogin.name,
-        'Error logging in with email and password',
         error,
+        `Error logging in with email ${input.emailOrPhone}`,
       );
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerException('Error logging in');
     }
   }
 
   /**
-   * Logs in a user
-   * @param input - Login input
-   * @param user - User
-   * @returns UserToken
+   * Generates tokens for a user
+   * @param input - The input data
+   * @returns The login response data
    */
-  async login(
-    input: GenerateTokenDto,
-    user: User,
-    avatarUrl?: string,
-  ): Promise<UserToken> {
+  async login(input: GenerateTokenDto): Promise<LoginResponseDto> {
     this.logger.debug(this.login.name, 'Logging in with email', input);
 
-    // For later use in authentication
-    // const existingToken = await this.userTokenService.findOne({
-    //   where: { deviceId: input.deviceId },
-    // });
-    // if (existingToken) {
-    //   await this.userTokenService.logout(existingToken.accessToken);
-    // }
-
-    if (avatarUrl || input.ssoType) {
-      await this.userService.update(user, {
-        ...(avatarUrl && { avatarUrl }),
-        ...(input.ssoType &&
-          !user.ssoId?.[input.ssoType] && {
-            ssoId: {
-              ...user.ssoId,
-              [input.ssoType]: input.ssoId,
-            },
-          }),
-      });
+    const existingToken = await this.userTokenService.findOne({
+      where: { deviceId: input.deviceId },
+    });
+    if (existingToken) {
+      await this.userTokenService.logout(existingToken.accessToken);
     }
 
     const { accessToken, accessTokenExpiry, refreshToken, refreshTokenExpiry } =
-      this.generateTokens(input, user);
+      this.generateTokens(input);
 
-    const { id: userTokenId } = await this.userTokenService.create({
+    await this.userTokenService.create({
       accessToken,
       accessTokenExpiry,
       refreshToken,
       refreshTokenExpiry,
-      ssoType: input.ssoType,
+      loginType: input.loginType,
       os: input.os,
-
-      // For later use in authentication
-      // latitude: input.latitude,
-      // longitude: input.longitude,
-      // deviceId: input.deviceId,
-      // fcmToken: input.fcmToken,
-
-      user,
+      deviceId: input.deviceId,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      user: input.user,
     });
 
-    return await this.userTokenService.findOneByIdOrThrow(userTokenId);
+    return {
+      accessToken,
+      accessTokenExpiry,
+      refreshToken,
+      refreshTokenExpiry,
+    };
   }
 
   /**
-   * Registers a user
-   * @param input - Register input
-   * @returns User ID
+   * Registers a new user
+   * @param input - The register request data
+   * @returns The response of the register
    */
-  async register(input: RegisterDto): Promise<{ userId: string }> {
+  async register(input: RegisterRequestDto): Promise<RegisterResponseDto> {
     this.logger.debug(this.register.name, 'Registering with email', {
-      email: input.email,
+      emailOrPhone: input.emailOrPhone,
     });
 
     try {
+      const existingUser = await this.userService.findUserByEmailOrPhone(
+        input.emailOrPhone,
+      );
+      if (existingUser) {
+        throw new BadRequestException(
+          'User already exists with this email or phone',
+        );
+      }
+
       const userRole = await this.roleService.findOneOrThrow({
         where: { name: ROLES.USER },
       });
-      const password = await hash(input.password, 10);
+      const password = await this.passwordService.hashPassword(input.password);
 
-      const userData = {
+      const userData: DeepPartial<User> = {
         fname: input.fname,
         lname: input.lname,
-        phone: input.phone,
-        email: input.email,
         password,
         role: userRole,
       };
 
-      const { id: userId } = await this.userService.create(userData);
+      const isEmailInput = this.userService.validateEmailFormat(
+        input.emailOrPhone,
+      );
+      if (isEmailInput) {
+        userData.email = input.emailOrPhone;
+      } else {
+        userData.phone = input.emailOrPhone;
+      }
 
-      return { userId };
+      const { id: userId } = await this.userService.create(userData);
+      const user = await this.userService.findOneByIdOrThrow(userId);
+
+      return {
+        userId,
+        phone: user.phone || '',
+        phoneVerified: user.phoneVerified,
+        email: user.email || '',
+        emailVerified: user.emailVerified,
+      };
     } catch (error) {
-      this.logger.error(this.register.name, 'Error registering', error);
-      throw new InternalServerException('Error registering');
+      this.logger.throwServiceError(
+        this.register.name,
+        error,
+        `Error registering user with credentials ${input.emailOrPhone}`,
+      );
     }
   }
 
   /**
-   * Generates access token by refresh token
-   * @param refreshToken - Refresh token
-   * @param accessToken - Access token
-   * @returns UserToken
+   * Registers a user after social login
+   * @param input - The register request data
+   * @param user - The user
+   * @returns The response of the register
+   */
+  async registerAfterSocialLogin(
+    input: RegisterAfterSocialLoginRequestDto,
+    user: User,
+  ): Promise<RegisterResponseDto> {
+    this.logger.debug(
+      this.registerAfterSocialLogin.name,
+      'Registering after social login',
+      {
+        emailOrPhone: input.emailOrPhone,
+      },
+    );
+
+    try {
+      const userDataToUpdate: QueryDeepPartialEntity<User> = {
+        fname: input.fname,
+        lname: input.lname,
+      };
+
+      const isEmailInput = this.userService.validateEmailFormat(
+        input.emailOrPhone,
+      );
+      if (isEmailInput) {
+        userDataToUpdate.email = input.emailOrPhone;
+      } else {
+        userDataToUpdate.phone = input.emailOrPhone;
+      }
+
+      await this.userService.update(user, userDataToUpdate);
+      const updatedUser = await this.userService.findOneByIdOrThrow(user.id);
+
+      return {
+        userId: updatedUser.id,
+        phone: updatedUser.phone || '',
+        phoneVerified: updatedUser.phoneVerified,
+        email: updatedUser.email || '',
+        emailVerified: updatedUser.emailVerified,
+      };
+    } catch (error) {
+      this.logger.throwServiceError(
+        this.registerAfterSocialLogin.name,
+        error,
+        `Error registering user with credentials ${input.emailOrPhone}`,
+      );
+    }
+  }
+
+  /**
+   * Generates a new access token by refresh token
+   * @param refreshToken - The refresh token
+   * @param accessToken - The access token
+   * @returns The login response data
    */
   async generateAccessTokenByRefreshToken(
     refreshToken: string,
     accessToken: string,
-  ): Promise<{
-    accessToken: string;
-    accessTokenExpiry: string;
-    refreshToken: string;
-    refreshTokenExpiry: string;
-  }> {
+  ): Promise<GenerateAccessTokenResponseDto> {
     this.logger.debug(
       this.generateAccessTokenByRefreshToken.name,
       'Generating access token by refresh token',
@@ -327,20 +294,14 @@ export class AuthService {
       }
 
       const generateTokensInput: GenerateTokenDto = {
-        email: existingUserToken.user.email,
+        loginType: existingUserToken.loginType,
+        latitude: existingUserToken.latitude,
+        longitude: existingUserToken.longitude,
+        deviceId: existingUserToken.deviceId,
         os: existingUserToken.os,
-
-        // For later use in authentication
-        // latitude: existingUserToken.latitude,
-        // longitude: existingUserToken.longitude,
-        // deviceId: existingUserToken.deviceId,
-        // os: existingUserToken.os,
-        // fcmToken: existingUserToken.fcmToken,
+        user: existingUserToken.user,
       };
-      const newTokens = this.generateTokens(
-        generateTokensInput,
-        existingUserToken.user,
-      );
+      const newTokens = this.generateTokens(generateTokensInput);
 
       const updateResult = await this.userTokenService.update(
         existingUserToken,
@@ -350,56 +311,44 @@ export class AuthService {
         },
       );
       if (!updateResult)
-        throw new InternalServerException('Error generating access token');
+        throw new ConflictException('Error generating access token');
 
       return {
         accessToken: newTokens.accessToken,
         accessTokenExpiry: newTokens.accessTokenExpiry,
-        refreshToken: newTokens.refreshToken,
-        refreshTokenExpiry: newTokens.refreshTokenExpiry,
       };
     } catch (error) {
-      this.logger.error(
+      this.logger.throwServiceError(
         this.generateAccessTokenByRefreshToken.name,
-        'Error generating access token by refresh token',
         error,
+        'Error generating access token by refresh token',
       );
-      throw new InternalServerException('Error generating access token');
     }
   }
 
   /**
-   * Generates tokens
-   * @param input - Generate token input
-   * @param user - User
-   * @returns UserToken
+   * Generates tokens for a user
+   * @param input - The input data
+   * @returns The login response data
    */
-  private generateTokens(
-    input: GenerateTokenDto,
-    user: User,
-  ): {
-    accessToken: string;
-    accessTokenExpiry: string;
-    refreshToken: string;
-    refreshTokenExpiry: string;
-  } {
+  private generateTokens(input: GenerateTokenDto): LoginResponseDto {
     this.logger.debug(this.generateTokens.name, 'Generating tokens', {
       input,
     });
 
     try {
       const payload: TokenPayloadDto = {
-        email: user.email,
-        userId: user.id,
-        role: user.role.name,
+        email: input.user.email,
+        userId: input.user.id,
+        role: input.user.role.name,
       };
 
       const accessTokenExpiry = new Date(
         Date.now() + this.jwtExpirationInterval,
-      ).toISOString();
+      );
       const refreshTokenExpiry = new Date(
         Date.now() + this.jwtRefreshExpirationInterval,
-      ).toISOString();
+      );
 
       const accessToken = this.jwtService.sign(
         {
@@ -432,12 +381,11 @@ export class AuthService {
         refreshTokenExpiry,
       };
     } catch (error) {
-      this.logger.error(
+      this.logger.throwServiceError(
         this.generateTokens.name,
-        'Error generating tokens',
         error,
+        'Error generating tokens',
       );
-      throw new InternalServerException('Error generating tokens');
     }
   }
 }

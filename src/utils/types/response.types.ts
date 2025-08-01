@@ -1,8 +1,3 @@
-export interface IListAPIResponse<T> {
-  totalCount: number;
-  records: T[];
-}
-
 export interface IPaginatedListAPIResponse<T> {
   totalCount: number;
   records: T[];
@@ -11,10 +6,19 @@ export interface IPaginatedListAPIResponse<T> {
   totalPages: number;
 }
 
-export interface IAddResponse {
+export interface IListAPIResponse<T> {
+  totalCount: number;
+  records: T[];
+}
+
+export interface ICreateResponse {
   id: string;
 }
 
-export type IUpdateResponse = boolean;
+export interface IUpdateResponse {
+  status: boolean;
+}
 
-export type IDeleteResponse = boolean;
+export interface IRemoveResponse {
+  status: boolean;
+}

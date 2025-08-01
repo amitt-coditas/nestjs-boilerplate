@@ -9,11 +9,7 @@ import { Request, Response } from 'express';
 
 import { InternalServerException } from '../exceptions';
 import { LoggerService } from '../logger/logger.service';
-import {
-  ErrorResponse,
-  RequestContextInfo,
-  ValidationFieldError,
-} from '../types/app.types';
+import { ErrorResponse, ValidationFieldError } from '../types/app.types';
 
 @Catch()
 export class GlobalHttpExceptionFilter implements ExceptionFilter {
@@ -27,13 +23,11 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
-    const methodName = this.catch.name;
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let errorCode = 'INTERNAL_SERVER_ERROR';
     let errors: ValidationFieldError[] = [];
-    let stack: string | undefined;
 
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
@@ -64,13 +58,8 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
       } else if (typeof response === 'string') {
         message = response;
       }
-
-      if (exception instanceof Error) {
-        stack = exception.stack;
-      }
     } else if (exception instanceof Error) {
       message = exception.message || message;
-      stack = exception.stack;
 
       const internalError = new InternalServerException(message);
       status = internalError.getStatus();
@@ -86,29 +75,6 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
         }
       }
     }
-
-    const requestInfo: RequestContextInfo = {
-      method: req.method,
-      url: req.url,
-      query: req.query,
-      params: req.params,
-      headers: {
-        'user-agent': req.get('user-agent'),
-        'x-forwarded-for': req.get('x-forwarded-for'),
-      },
-    };
-
-    const logContext = {
-      requestInfo,
-      status,
-      errorCode,
-      validationErrors: errors.length > 0 ? errors : undefined,
-    };
-
-    this.logger.error(methodName, `[${status}] ${message}`, {
-      stack,
-      ...logContext,
-    });
 
     const errorResponse: ErrorResponse = {
       error: {

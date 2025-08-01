@@ -1,0 +1,201 @@
+{
+  "Running": [
+    "Running Shoes",
+    "Compression Socks",
+    "Running Watches",
+    "Hydration Belts",
+    "Running Hats",
+    "Running Armbands",
+    "Trail Running Shoes",
+    "Trail Running Backpacks",
+    "Reflective Vests",
+    "Running Sunglasses",
+    "Energy Gels"
+  ],
+  "Cycling": [
+    "Cycling Helmets",
+    "Bike Computers",
+    "Cycling Shorts",
+    "Cycling Gloves",
+    "Bike Lights",
+    "Bike Pumps",
+    "Cycling Shoes",
+    "Chain Lubes",
+    "Bike Repair Kits",
+    "Handlebar Bags",
+    "Road Bikes",
+    "Mountain Bikes",
+    "Hybrid Bikes",
+    "Folding Bikes",
+    "Electric Bikes",
+    "BMX Bikes",
+    "Bike Saddles",
+    "Bike Racks",
+    "Bike Chain Locks",
+    "Handlebar Tape"
+  ],
+  "Weightlifting": [
+    "Weightlifting Shoes",
+    "Weightlifting Belts",
+    "Barbells",
+    "Wrist Wraps",
+    "Lifting Straps",
+    "Power Racks",
+    "EZ Curl Bars",
+    "Adjustable Dumbbells",
+    "Change Plates",
+    "Chalk"
+  ],
+  "Yoga & Mobility": [
+    "Yoga Mats",
+    "Yoga Blocks",
+    "Stretch Straps",
+    "Meditation Cushions",
+    "Foam Rollers",
+    "Bolsters",
+    "Eye Pillows",
+    "Yoga Wheels"
+  ],
+  "Crossfit": ["Kettlebells", "Plyo Boxes", "Weight Vests", "Jump Boxes"],
+  "Soccer": [
+    "Soccer Balls",
+    "Goal Nets",
+    "Goalkeeper Jerseys",
+    "Coach Boards",
+    "Soccer Cleats",
+    "Shin Guards",
+    "Goalie Gloves"
+  ],
+  "Basketball": [
+    "Shooting Sleeves",
+    "Training Rebounders",
+    "Shoe Grip Pads",
+    "Basketballs",
+    "Basketball Shoes",
+    "Portable Hoops",
+    "Arm Sleeves"
+  ],
+  "Tennis": [
+    "String Reels",
+    "Grip Enhancers",
+    "Tennis Nets",
+    "Tennis Rackets",
+    "Tennis Balls",
+    "Racquet Bags",
+    "Overgrips",
+    "Ball Hoppers"
+  ],
+  "Hiking": ["Hydration Bladders", "Trekking Pants", "Headlamps"],
+  "Swimming": [
+    "Swim Paddles",
+    "Nose Clips",
+    "Swim Bags",
+    "Swim Goggles",
+    "Swim Caps",
+    "Kickboards",
+    "Training Fins"
+  ],
+  "Youth Sports": [
+    "Youth Batting Helmets",
+    "Mini Cones",
+    "Youth Practice Nets",
+    "Youth Baseball Gloves",
+    "Youth Bats",
+    "Batting Tees",
+    "Youth Practice Balls",
+    "Youth Soccer Starter Kits",
+    "Portable Youth Soccer Goals",
+    "Adjustable Youth Basketball Hoops",
+    "Mini Basketballs",
+    "Youth Safety Pads",
+    "Multi-Sport Kits (Ages 3–5)"
+  ],
+  "Golf": [
+    "Golf Club Sets",
+    "Golf Drivers",
+    "Golf Putters",
+    "Golf Rangefinders",
+    "Golf Balls",
+    "Golf Bags",
+    "Golf Gloves",
+    "Golf Shoes"
+  ],
+  "Baseball": [
+    "Baseball Bats",
+    "Baseball Gloves",
+    "Catcher’s Gear Sets",
+    "Batting Helmets",
+    "Batting Tees",
+    "Pitching Nets"
+  ],
+  "Football": [
+    "Football Helmets",
+    "Shoulder Pads",
+    "Footballs",
+    "Mouthguards",
+    "Kicking Tees"
+  ],
+  "Lacrosse": [
+    "Lacrosse Sticks",
+    "Lacrosse Gloves",
+    "Lacrosse Helmets",
+    "Lacrosse Balls"
+  ],
+  "Boxing": ["Boxing Gloves", "Hand Wraps", "Punching Bags", "Headgear"],
+  "Skating": [
+    "Inline Skates",
+    "Skateboards",
+    "Scooters",
+    "Protective Gear Sets"
+  ],
+  "Skiing & Snowboarding": [
+    "Skis",
+    "Ski Boots",
+    "Ski Poles",
+    "Ski Helmets",
+    "Ski Goggles",
+    "Ski Jackets",
+    "Ski Pants",
+    "Base Layers",
+    "Ski Gloves",
+    "Avalanche Beacons",
+    "Ski Backpacks",
+    "Snowboards",
+    "Snowboard Bindings",
+    "Snowboard Boots",
+    "Goggle Lenses"
+  ],
+  "Health & Wellness Devices": [
+    "Fitness Trackers",
+    "Smart Scales",
+    "Smart Thermometers",
+    "Blood Pressure Monitors",
+    "Pulse Oximeters",
+    "Sleep Trackers",
+    "EMF Protection Devices",
+    "Air Quality Monitors",
+    "Blue Light Glasses",
+    "Posture Correctors",
+    "Smart Water Bottles"
+  ],
+  "Table Sports": [
+    "Ping Pong Tables",
+    "Table Tennis Paddles",
+    "Table Tennis Nets",
+    "Scoreboards",
+    "Table Covers"
+  ],
+  "Archery": [
+    "Recurve Bows",
+    "Compound Bows",
+    "Arrows",
+    "Quivers",
+    "Bow Sights"
+  ],
+  "Disc Golf": [
+    "Disc Sets",
+    "Disc Golf Bags",
+    "Disc Golf Baskets",
+    "Mini Markers"
+  ]
+}

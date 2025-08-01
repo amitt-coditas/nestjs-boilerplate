@@ -1,9 +1,10 @@
 export * from './helper-functions';
 
-export * from './constants/app.constants';
+export * from './constants/app.constant';
 export * from './constants/decorators.constant';
 export * from './types/app.types';
 export * from './types/response.types';
+export * from './types/request.types';
 
 export * from './abstract-module/abstract.entity';
 export * from './abstract-module/abstract.repository';
@@ -20,6 +21,9 @@ export * from './redis/redis.service';
 export * from './aws/aws.module';
 export * from './aws/aws-s3.service';
 export * from './aws/aws-ses.service';
+
+export * from './twilio/twilio.module';
+export * from './twilio/twilio.service';
 
 export * from './config/config.module';
 

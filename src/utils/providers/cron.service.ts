@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
-import { TIMEZONE } from '../constants/app.constants';
+import { TIMEZONE } from '../constants/app.constant';
 import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
@@ -44,15 +44,22 @@ export class CronService {
       `Initializing ${jobName} notifications cron job with cron expression: ${cronExpression}`,
     );
 
-    const job = new CronJob<null>(
-      cronExpression,
-      async () => callbackFunction(),
-      undefined, // onComplete
-      true, // start immediately
-      timezone,
-    );
+    // Create the base CronJob
+    const baseJob = CronJob.from({
+      cronTime: cronExpression,
+      onTick: async () => callbackFunction(),
+      start: true,
+      timeZone: timezone,
+    });
 
-    this.schedulerRegistry.addCronJob(jobName, job);
+    // Add the required properties to match @nestjs/schedule's CronJob type
+    const job = Object.assign(baseJob, {
+      threshold: 250,
+      _isActive: true,
+      isActive: true,
+    });
+
+    this.schedulerRegistry.addCronJob(jobName, job as CronJob<null, null>);
   }
 
   /**

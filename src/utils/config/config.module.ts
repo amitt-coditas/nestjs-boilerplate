@@ -8,6 +8,7 @@ import * as joi from 'joi';
 export enum NODE_ENV {
   DEV_LOCAL = 'dev-local',
   DEV = 'dev',
+  STAGING = 'staging',
   QA = 'qa',
   PROD = 'prod',
 }
@@ -17,15 +18,19 @@ const ENV_SCHEMA = {
   PORT: joi.number().required(),
 
   JWT_SECRET: joi.string().required(),
-  JWT_EXPIRATION_INTERVAL_MS: joi.string().required(),
+  JWT_EXPIRATION_INTERVAL_MS: joi.number().required(),
   JWT_REFRESH_SECRET: joi.string().required(),
-  JWT_REFRESH_EXPIRATION_INTERVAL_MS: joi.string().required(),
-
-  SENTRY_DSN: joi.string().required(),
+  JWT_REFRESH_EXPIRATION_INTERVAL_MS: joi.number().required(),
 
   NODE_ENV: joi
     .string()
-    .valid(NODE_ENV.DEV_LOCAL, NODE_ENV.DEV, NODE_ENV.QA, NODE_ENV.PROD)
+    .valid(
+      NODE_ENV.DEV_LOCAL,
+      NODE_ENV.DEV,
+      NODE_ENV.STAGING,
+      NODE_ENV.QA,
+      NODE_ENV.PROD,
+    )
     .required(),
   DB_HOST: joi.string().required(),
   DB_PORT: joi.number().required(),
@@ -33,20 +38,25 @@ const ENV_SCHEMA = {
   DB_PASSWORD: joi.string().required(),
   DB_NAME: joi.string().required(),
 
-  GOOGLE_CLIENT_ID: joi.string().required(),
+  GOOGLE_CLIENT_ID_WEB: joi.string().required(),
+  GOOGLE_CLIENT_ID_IOS: joi.string().required(),
+  GOOGLE_CLIENT_ID_ANDROID: joi.string().required(),
   GOOGLE_CLIENT_SECRET: joi.string().required(),
+
+  TWILIO_ACCOUNT_SID: joi.string().required(),
+  TWILIO_AUTH_TOKEN: joi.string().required(),
+  TWILIO_VERIFY_SERVICE_SID: joi.string().required(),
+
+  FE_BASE_URL: joi.string().required(),
 
   AWS_REGION: joi.string().required(),
   AWS_ACCESS_KEY: joi.string().required(),
   AWS_SECRET_KEY: joi.string().required(),
 
   AWS_BUCKET: joi.string().required(),
-  AWS_BUCKET_PROFILE_PICTURES: joi.string().required(),
   AWS_SES_SOURCE_MAIL: joi.string().required(),
 
-  FE_BASE_URL: joi.string().required(),
-
-  // For Redis Configuration
+  // For later use
   // REDIS_HOST: joi.string().required(),
   // REDIS_PORT: joi.number().required(),
   // REDIS_USERNAME: joi.string().required(),

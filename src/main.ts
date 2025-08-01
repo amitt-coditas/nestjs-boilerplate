@@ -8,7 +8,6 @@ import {
   CustomValidationPipe,
   ENV_KEYS,
   ResponseInterceptor,
-  LoggerService,
 } from '@utils/index';
 
 import { AppModule } from './app/app.module';
@@ -17,8 +16,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get<ConfigService>(ConfigService);
   const port = configService.get<number>(ENV_KEYS.PORT) || 3000;
-  const logger = LoggerService.forClass('');
-  // const env = configService.get<NODE_ENV>(ENV_KEYS.NODE_ENV) || NODE_ENV.DEV;
 
   const filter = app.get(GlobalHttpExceptionFilter);
   app.useGlobalFilters(filter);
@@ -47,9 +44,7 @@ async function bootstrap() {
   const swaggerSetupService = app.get(SwaggerSetupService);
   swaggerSetupService.setupSwagger(app);
 
-  await app.listen(port).then(() => {
-    logger.info(bootstrap.name, 'Server is running on port', { port });
-  });
+  await app.listen(port);
 }
 
 bootstrap().catch((error) => {

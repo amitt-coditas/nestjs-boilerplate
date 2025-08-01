@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '@utils/index';
 
-import { PasswordResetToken } from 'src/modules/auth/entities/password-reset-token.entity';
+import { UserOtps } from 'src/modules/auth/entities/user-otp.entity';
 
 import { UserToken } from '../../auth/entities/user-token.entity';
 import { Role } from '../../role/entities/role.entity';
@@ -15,28 +15,31 @@ export class User extends AbstractEntity {
   @Column({ type: 'text', name: 'l_name' })
   lname: string;
 
-  @Column({ type: 'text', name: 'avatar_url', nullable: true })
-  avatarUrl: string;
+  @Column({ type: 'text', name: 'profile_picture', nullable: true })
+  profilePicture: string;
 
-  @Column({ type: 'text', name: 'phone', unique: true })
+  @Column({ type: 'text', name: 'phone', unique: true, nullable: true })
   phone: string;
 
-  @Column({ type: 'text', name: 'email', unique: true })
+  @Column({ type: 'boolean', name: 'phone_verified', default: false })
+  phoneVerified: boolean;
+
+  @Column({ type: 'text', name: 'email', unique: true, nullable: true })
   email: string;
+
+  @Column({ type: 'boolean', name: 'email_verified', default: false })
+  emailVerified: boolean;
 
   @Column({ type: 'text', name: 'password', nullable: true })
   password: string;
-
-  @Column({ type: 'jsonb', name: 'sso_id', nullable: true })
-  ssoId: { google: string; apple: string; facebook: string };
 
   @ManyToOne(() => Role, (role) => role.users)
   @JoinColumn({ name: 'role_id' })
   role: Role;
 
-  @OneToMany(() => UserToken, (token) => token.user, { cascade: true })
+  @OneToMany(() => UserToken, (token) => token.user)
   tokens: UserToken[];
 
-  @OneToMany(() => PasswordResetToken, (token) => token.user, { cascade: true })
-  passwordResetTokens: PasswordResetToken[];
+  @OneToMany(() => UserOtps, (otp) => otp.user, { cascade: true })
+  otps: UserOtps[];
 }

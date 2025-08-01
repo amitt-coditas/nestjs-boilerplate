@@ -36,7 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const accessToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req) as string;
     const token =
       await this.userTokenService.getActiveTokenByAccessToken(accessToken);
-    if (!token) throw new UnauthorizedException('Token expired');
+    if (!token) throw new UnauthorizedException('Token has been expired');
 
     return await this.userService.findOneByIdOrThrow(userId);
   }

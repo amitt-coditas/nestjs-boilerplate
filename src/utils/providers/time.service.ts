@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 
-import { TIMEZONE } from '../constants/app.constants';
+import { TIMEZONE } from '../constants/app.constant';
 import { TimezoneTime } from '../types/app.types';
 
 @Injectable()

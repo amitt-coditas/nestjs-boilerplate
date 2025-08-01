@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class RegisterDto {
+export class RegisterRequestDto {
   @ApiProperty({
     description: 'The first name of the user',
     example: 'John',
@@ -19,20 +19,12 @@ export class RegisterDto {
   lname: string;
 
   @ApiProperty({
-    description: 'The phone number of the user',
+    description: 'The email or phone number of the user',
     example: '+919876543210',
   })
   @IsString()
   @IsNotEmpty()
-  phone: string;
-
-  @ApiProperty({
-    description: 'The email of the user',
-    example: 'john.doe@example.com',
-  })
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  emailOrPhone: string;
 
   @ApiProperty({
     description: 'The password of the user',
@@ -41,4 +33,17 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+}
+
+export class RegisterAfterSocialLoginRequestDto extends OmitType(
+  RegisterRequestDto,
+  ['password'],
+) {}
+
+export class RegisterResponseDto {
+  userId: string;
+  phone: string;
+  phoneVerified: boolean;
+  email: string;
+  emailVerified: boolean;
 }

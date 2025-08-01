@@ -8,4 +8,8 @@ export class BaseFiltersDto {
   @IsOptional()
   @IsString()
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

@@ -1,4 +1,4 @@
-import { Injectable, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import {
   DeepPartial,
   EntityManager,
@@ -8,13 +8,17 @@ import {
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
-import { IAddResponse, IUpdateResponse, IDeleteResponse } from '@utils/index';
+import {
+  ICreateResponse,
+  IUpdateResponse,
+  IRemoveResponse,
+  IListAPIResponse,
+} from '@utils/index';
 
 import { AbstractEntity } from './abstract.entity';
 
 import { LoggerService } from '../logger/logger.service';
 
-@Injectable()
 export abstract class AbstractRepository<
   TEntity extends AbstractEntity,
 > extends Repository<TEntity> {
@@ -49,22 +53,26 @@ export abstract class AbstractRepository<
    */
   async findManyRecords(
     findQuery: FindManyOptions<TEntity>,
-  ): Promise<TEntity[] | undefined> {
-    return await this.find(findQuery);
+  ): Promise<IListAPIResponse<TEntity>> {
+    const [records, totalCount] = await this.findAndCount(findQuery);
+
+    return {
+      totalCount,
+      records,
+    };
   }
 
   /**
    * Create a record
    * @param input - Record
-   * @returns IAddResponse - The identifier of the created record
+   * @returns ICreateResponse - The identifier of the created record
    */
-  async createRecord(
-    input: QueryDeepPartialEntity<TEntity>,
-  ): Promise<IAddResponse> {
-    const insertResult = await this.insert(input);
-    const id = insertResult.identifiers[0].id as string;
+  async createRecord(input: DeepPartial<TEntity>): Promise<ICreateResponse> {
+    const createResponse = this.create(input);
 
-    return { id };
+    const record = await this.save(createResponse);
+
+    return { id: record.id };
   }
 
   /**
@@ -78,35 +86,40 @@ export abstract class AbstractRepository<
     updateFields: QueryDeepPartialEntity<TEntity>,
   ): Promise<IUpdateResponse> {
     const updateResult = await this.update(record.id, updateFields);
-    if (!updateResult.affected) return false;
 
-    return updateResult.affected > 0;
+    const status = updateResult.affected ? updateResult.affected > 0 : false;
+
+    return { status };
   }
 
   /**
    * Soft remove a record
    * @param record - Record
-   * @returns IDeleteResponse - The result of the soft removal
+   * @returns IRemoveResponse - The result of the soft removal
    */
   async softRemoveRecord(
     record: DeepPartial<TEntity>,
-  ): Promise<IDeleteResponse> {
+  ): Promise<IRemoveResponse> {
     Object.assign(record, { deletedAt: new Date() });
     await this.save(record);
 
     const softRemoveResult = await this.softRemove(record);
 
-    return softRemoveResult.id === record.id;
+    const status = softRemoveResult.id === record.id;
+
+    return { status };
   }
 
   /**
    * Remove a record
    * @param record - Record
-   * @returns IDeleteResponse - The result of the removal
+   * @returns IRemoveResponse - The result of the removal
    */
-  async removeRecord(record: TEntity): Promise<IDeleteResponse> {
+  async removeRecord(record: TEntity): Promise<IRemoveResponse> {
     const removeResult = await this.remove(record);
 
-    return removeResult.id === record.id;
+    const status = removeResult.id === record.id;
+
+    return { status };
   }
 }
