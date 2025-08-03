@@ -30,7 +30,7 @@ export class UserService extends AbstractService<User, UserRepository> {
         where: { id },
         relations: ['role'],
       });
-      if (!user) throw new NotFoundException(this.tableName);
+      if (!user) throw new NotFoundException('User');
 
       return user;
     } catch (error) {
@@ -89,7 +89,7 @@ export class UserService extends AbstractService<User, UserRepository> {
         where: { email },
         relations: ['role'],
       });
-      if (!user) throw new NotFoundException(this.tableName);
+      if (!user) throw new NotFoundException('User');
 
       return user;
     } catch (error) {
@@ -148,7 +148,7 @@ export class UserService extends AbstractService<User, UserRepository> {
         where: { phone },
         relations: ['role'],
       });
-      if (!user) throw new NotFoundException(this.tableName);
+      if (!user) throw new NotFoundException('User');
 
       return user;
     } catch (error) {
@@ -193,9 +193,9 @@ export class UserService extends AbstractService<User, UserRepository> {
    * @returns The user
    * @throws NotFoundException if user is not found
    */
-  async findUserByEmailOrPhone(emailOrPhone: string): Promise<User> {
+  async findOneOrThrowByEmailOrPhone(emailOrPhone: string): Promise<User> {
     this.logger.debug(
-      this.findUserByEmailOrPhone.name,
+      this.findOneOrThrowByEmailOrPhone.name,
       'Finding user by email or phone',
       {
         emailOrPhone,
@@ -215,12 +215,50 @@ export class UserService extends AbstractService<User, UserRepository> {
             relations: ['role'],
           });
 
-      if (!user) throw new NotFoundException(this.tableName);
+      if (!user) throw new NotFoundException('User');
 
       return user;
     } catch (error) {
       this.logger.throwServiceError(
-        this.findUserByEmailOrPhone.name,
+        this.findOneOrThrowByEmailOrPhone.name,
+        error,
+        'Error finding user by email or phone',
+      );
+    }
+  }
+
+  /**
+   * Find a user by email or phone
+   * @param emailOrPhone - The email or phone of the user
+   * @returns The user
+   * @throws NotFoundException if user is not found
+   */
+  async findOneByEmailOrPhone(emailOrPhone: string): Promise<User | undefined> {
+    this.logger.debug(
+      this.findOneByEmailOrPhone.name,
+      'Finding user by email or phone',
+      {
+        emailOrPhone,
+      },
+    );
+
+    try {
+      this.validateEmailPhoneFormat(emailOrPhone);
+
+      const user = this.validateEmailFormat(emailOrPhone)
+        ? await this.repository.findOneRecord({
+            where: { email: emailOrPhone },
+            relations: ['role'],
+          })
+        : await this.repository.findOneRecord({
+            where: { phone: emailOrPhone },
+            relations: ['role'],
+          });
+
+      return user;
+    } catch (error) {
+      this.logger.throwServiceError(
+        this.findOneByEmailOrPhone.name,
         error,
         'Error finding user by email or phone',
       );

@@ -68,7 +68,8 @@ export class PasswordService {
     const { emailOrPhone } = input;
 
     try {
-      const user = await this.userService.findUserByEmailOrPhone(emailOrPhone);
+      const user =
+        await this.userService.findOneOrThrowByEmailOrPhone(emailOrPhone);
       const isEmail = this.userService.validateEmailFormat(emailOrPhone);
 
       const hasExceededLimit = await this.hasExceededDailyLimitAndUpdate(user);

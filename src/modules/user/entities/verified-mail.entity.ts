@@ -6,7 +6,7 @@ import { Invitation } from './invitation.entity';
 
 @Entity('verified_mails')
 export class VerifiedMail extends AbstractEntity {
-  @Column({ type: 'text' })
+  @Column({ type: 'text', unique: true })
   email: string;
 
   @Column({ type: 'boolean', default: false })

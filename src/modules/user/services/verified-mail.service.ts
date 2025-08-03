@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { BadRequestException } from '@utils/exceptions';
+import { BadRequestException, ConflictException } from '@utils/exceptions';
 import { AbstractService } from '@utils/index';
 
 import { VerifiedMailResponseDto } from '../dto/verified-mail-response.dto';
@@ -27,6 +27,13 @@ export class VerifiedMailService extends AbstractService<
     });
 
     try {
+      const existingVerifiedMail = await this.findOne({
+        where: { email },
+      });
+      if (existingVerifiedMail) {
+        throw new ConflictException('Mail already exists');
+      }
+
       const { id } = await this.create({
         email,
         verified: true,

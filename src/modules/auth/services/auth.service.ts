@@ -77,7 +77,7 @@ export class AuthService {
     );
 
     try {
-      const user = await this.userService.findUserByEmailOrPhone(
+      const user = await this.userService.findOneOrThrowByEmailOrPhone(
         input.emailOrPhone,
       );
 
@@ -161,7 +161,7 @@ export class AuthService {
     });
 
     try {
-      const existingUser = await this.userService.findUserByEmailOrPhone(
+      const existingUser = await this.userService.findOneByEmailOrPhone(
         input.emailOrPhone,
       );
       if (existingUser) {
