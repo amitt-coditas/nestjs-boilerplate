@@ -1,10 +1,8 @@
-import { randomBytes } from 'crypto';
-
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { compare, hash } from 'bcrypt';
-import { Between, LessThan, MoreThan } from 'typeorm';
+import { Between, DeepPartial, LessThan, MoreThan } from 'typeorm';
 
 import { BadRequestException } from '@utils/exceptions';
 import {
@@ -24,14 +22,16 @@ import { UserService } from '../../user/services/user.service';
 import {
   EMAIL_FORGOT_PASSWORD_MESSAGE,
   EMAIL_FORGOT_PASSWORD_SUBJECT,
+  SMS_FORGOT_PASSWORD_MESSAGE,
 } from '../constants/email-forgot-password.constant';
-import { OTP_MEDIUM, OTP_PURPOSE } from '../constants/otp.enum';
+import { OTP_PURPOSE } from '../constants/otp.enum';
 import {
-  ForgotPasswordDto,
+  GenerateOtpDto,
   GeneratePasswordDto,
   ResetPasswordDto,
   ResetForgotPasswordDto,
 } from '../dto';
+import { UserOtps } from '../entities/user-otp.entity';
 
 @Injectable()
 export class PasswordService {
@@ -39,6 +39,7 @@ export class PasswordService {
 
   private readonly feBaseUrl: string;
 
+  private readonly otpPurpose = OTP_PURPOSE.FORGOT_PASSWORD;
   private readonly MAX_TOKEN_LENGTH = 6;
   private readonly MAX_TOKENS_PER_DAY = 3;
   private readonly VALID_FOR_MINUTES = 30;
@@ -61,15 +62,14 @@ export class PasswordService {
    * @param input - The input of the forgot password
    * @returns The response of the forgot password
    */
-  async forgotPassword(
-    input: ForgotPasswordDto,
-  ): Promise<BaseMessageResponseDto> {
-    this.logger.debug(this.forgotPassword.name, 'Forgot password', { input });
+  async forgotPassword(input: GenerateOtpDto): Promise<BaseMessageResponseDto> {
+    this.logger.debug(this.forgotPassword.name, 'Forgot password', input);
+
+    const { emailOrPhone } = input;
 
     try {
-      const user = await this.userService.findUserByEmailOrPhone(
-        input.emailOrPhone,
-      );
+      const user = await this.userService.findUserByEmailOrPhone(emailOrPhone);
+      const isEmail = this.userService.validateEmailFormat(emailOrPhone);
 
       const hasExceededLimit = await this.hasExceededDailyLimitAndUpdate(user);
       if (hasExceededLimit) {
@@ -78,29 +78,41 @@ export class PasswordService {
         );
       }
 
-      const token = randomBytes(this.MAX_TOKEN_LENGTH)
-        .toString('hex')
-        .toUpperCase();
-      const validTill = new Date();
-      validTill.setMinutes(validTill.getMinutes() + this.VALID_FOR_MINUTES);
+      const { otp: token, validTill } =
+        this.userOtpService.buildOtpAndValidTill(
+          this.MAX_TOKEN_LENGTH,
+          'minutes',
+          this.VALID_FOR_MINUTES,
+        );
       const url = `${this.feBaseUrl}/reset-password?token=${token}`;
 
-      const messageId = await this.sesService.sendMail(
-        user.email,
-        EMAIL_FORGOT_PASSWORD_SUBJECT,
-        EMAIL_FORGOT_PASSWORD_MESSAGE(url, user.fname),
-      );
+      const userOtpEntity: DeepPartial<UserOtps> = {
+        otp: token,
+        validTill,
+        purpose: this.otpPurpose,
+        user,
+      };
+
+      let messageId: string | undefined;
+      if (isEmail) {
+        messageId = await this.sesService.sendMail(
+          user.email,
+          EMAIL_FORGOT_PASSWORD_SUBJECT,
+          EMAIL_FORGOT_PASSWORD_MESSAGE(url, user.fname),
+        );
+      } else {
+        messageId = await this.twilioService.sendSms(
+          user.phone,
+          SMS_FORGOT_PASSWORD_MESSAGE(url, user.fname),
+        );
+      }
+
       if (!messageId) {
         throw new BadRequestException('Error sending mail');
       }
 
-      await this.userOtpService.create({
-        otp: token,
-        purpose: OTP_PURPOSE.FORGOT_PASSWORD,
-        medium: OTP_MEDIUM.EMAIL,
-        validTill,
-        user,
-      });
+      userOtpEntity.messageId = messageId;
+      await this.userOtpService.create(userOtpEntity);
 
       return {
         status: true,
@@ -137,7 +149,6 @@ export class PasswordService {
           validTill: MoreThan(new Date()),
           isUsed: false,
         },
-        relations: ['user'],
       });
       if (!resetPasswordToken) {
         throw new BadRequestException(

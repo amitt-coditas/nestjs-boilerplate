@@ -19,6 +19,18 @@ export class TimeService {
     return DateTime.now().setZone(timeZone).toUTC().toJSDate();
   }
 
+  getStartOfCurrentHourInUTC(timeZone: TIMEZONE): Date {
+    const now = DateTime.now().setZone(timeZone);
+    const startOfHour = now.startOf('hour');
+    return startOfHour.toUTC().toJSDate();
+  }
+
+  getEndOfCurrentHourInUTC(timeZone: TIMEZONE): Date {
+    const now = DateTime.now().setZone(timeZone);
+    const endOfHour = now.endOf('hour');
+    return endOfHour.toUTC().toJSDate();
+  }
+
   getTimezoneTimeInUTC(
     input: TimezoneTime = {
       timeZone: TIMEZONE.ASIA_KOLKATA,

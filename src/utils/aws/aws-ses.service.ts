@@ -34,7 +34,18 @@ export class SESService {
     });
   }
 
-  async sendMail(email: string, subject: string, body: string) {
+  /**
+   * Send an email
+   * @param email - The email to send the mail to
+   * @param subject - The subject of the mail
+   * @param body - The body of the mail
+   * @returns The message id of the mail
+   */
+  async sendMail(
+    email: string,
+    subject: string,
+    body: string,
+  ): Promise<string | undefined> {
     this.logger.debug(this.sendMail.name, 'Sending mail', {
       email,
       subject,

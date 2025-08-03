@@ -16,7 +16,7 @@ import {
 } from '@utils/index';
 
 import {
-  ForgotPasswordDto,
+  GenerateOtpDto,
   GenerateAccessTokenRequestDto,
   GenerateAccessTokenResponseDto,
   GeneratePasswordDto,
@@ -28,10 +28,13 @@ import {
   ResetForgotPasswordDto,
   ResetPasswordDto,
   SocialLoginBodyDto,
+  VerifySmsOtpDto,
+  VerifyEmailOtpDto,
 } from './dto';
 import { AuthService } from './services/auth.service';
 import { PasswordService } from './services/password.service';
 import { SocialLoginOrchestrator } from './services/social-login-orchestrator.service';
+import { UserOtpService } from './services/user-otp.service';
 import { UserTokenService } from './services/user-token.service';
 
 import { User } from '../user/entities/user.entity';
@@ -42,6 +45,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordService: PasswordService,
+    private readonly userOtpService: UserOtpService,
     private readonly userTokenService: UserTokenService,
     private readonly socialLoginOrchestrator: SocialLoginOrchestrator,
   ) {}
@@ -100,13 +104,45 @@ export class AuthController {
     return this.authService.registerAfterSocialLogin(input, user);
   }
 
-  @Public()
+  @OverrideInvitation()
+  @Post('otp/generate')
+  @ApiOperation({ summary: 'Generate OTP' })
+  @ApiBody({ type: GenerateOtpDto })
+  generateOtp(
+    @Body() input: GenerateOtpDto,
+    @CurrentUser() user: User,
+  ): Promise<BaseMessageResponseDto> {
+    return this.userOtpService.generateOtp(input, user);
+  }
+
+  @OverrideInvitation()
+  @Post('otp/verify/sms')
+  @ApiOperation({ summary: 'Verify SMS OTP' })
+  @ApiBody({ type: VerifySmsOtpDto })
+  verifySmsOtp(
+    @Body() input: VerifySmsOtpDto,
+    @CurrentUser() user: User,
+  ): Promise<BaseMessageResponseDto> {
+    return this.userOtpService.verifySmsOtp(input, user);
+  }
+
+  @OverrideInvitation()
+  @Post('otp/verify/email')
+  @ApiOperation({ summary: 'Verify Email OTP' })
+  @ApiBody({ type: VerifyEmailOtpDto })
+  verifyEmailOtp(
+    @Body() input: VerifyEmailOtpDto,
+    @CurrentUser() user: User,
+  ): Promise<BaseMessageResponseDto> {
+    return this.userOtpService.verifyEmailOtp(input, user);
+  }
+
   @OverrideInvitation()
   @Post('password/forgot')
   @ApiOperation({ summary: 'Forgot password' })
-  @ApiBody({ type: ForgotPasswordDto })
+  @ApiBody({ type: GenerateOtpDto })
   forgotPassword(
-    @Body() input: ForgotPasswordDto,
+    @Body() input: GenerateOtpDto,
   ): Promise<BaseMessageResponseDto> {
     return this.passwordService.forgotPassword(input);
   }

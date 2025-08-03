@@ -2,8 +2,7 @@ import { Column, Entity, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 import { AbstractEntity } from '@utils/index';
 
-import { UserOtps } from 'src/modules/auth/entities/user-otp.entity';
-
+import { UserOtps } from '../../auth/entities/user-otp.entity';
 import { UserToken } from '../../auth/entities/user-token.entity';
 import { Role } from '../../role/entities/role.entity';
 
@@ -40,6 +39,6 @@ export class User extends AbstractEntity {
   @OneToMany(() => UserToken, (token) => token.user)
   tokens: UserToken[];
 
-  @OneToMany(() => UserOtps, (otp) => otp.user, { cascade: true })
+  @OneToMany(() => UserOtps, (otp) => otp.user)
   otps: UserOtps[];
 }

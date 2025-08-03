@@ -46,6 +46,7 @@ const ENV_SCHEMA = {
   TWILIO_ACCOUNT_SID: joi.string().required(),
   TWILIO_AUTH_TOKEN: joi.string().required(),
   TWILIO_VERIFY_SERVICE_SID: joi.string().required(),
+  TWILIO_PHONE_NUMBER: joi.string().required(),
 
   FE_BASE_URL: joi.string().required(),
 

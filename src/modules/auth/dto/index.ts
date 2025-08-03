@@ -2,7 +2,7 @@ export * from './login.dto';
 export * from './register.dto';
 export * from './login-metadata.dto';
 export * from './social-login-response.dto';
-export * from './forgot-password.dto';
+export * from './otp.dto';
 export * from './reset-password.dto';
 export * from './generate-password.dto';
 export * from './generate-token.dto';
