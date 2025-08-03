@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { IsNull, LessThan, MoreThan } from 'typeorm';
@@ -33,9 +35,11 @@ export class UserTokenService extends AbstractService<
     );
 
     try {
+      const accessTokenHash = this.hashToken(accessToken);
+
       const userToken = await this.findOne({
         where: {
-          accessToken,
+          accessTokenHash,
           deletedAt: IsNull(),
           accessTokenExpiry: MoreThan(new Date()),
         },
@@ -57,15 +61,15 @@ export class UserTokenService extends AbstractService<
    * @param accessToken - The access token to logout
    * @returns A boolean indicating the success of the logout operation
    */
-  async logout(accessToken: string): Promise<IRemoveResponse> {
+  async logout(userToken: UserToken): Promise<IRemoveResponse> {
     this.logger.debug(this.logout.name, 'Logging out with access token', {
-      accessToken,
+      userTokenId: userToken.id,
     });
 
     try {
       const token = await this.findOneOrThrow({
         where: {
-          accessToken,
+          id: userToken.id,
         },
       });
 
@@ -74,9 +78,51 @@ export class UserTokenService extends AbstractService<
       this.logger.throwServiceError(
         this.logout.name,
         error,
+        `Error logging out with user token ${userToken.id}`,
+      );
+    }
+  }
+
+  /**
+   * Logs out a user by removing their access token
+   * @param accessToken - The access token to logout
+   * @returns A boolean indicating the success of the logout operation
+   */
+  async logoutWithAccessToken(accessToken: string): Promise<IRemoveResponse> {
+    this.logger.debug(
+      this.logoutWithAccessToken.name,
+      'Logging out with access token',
+      {
+        accessToken,
+      },
+    );
+
+    try {
+      const accessTokenHash = this.hashToken(accessToken);
+
+      const token = await this.findOneOrThrow({
+        where: {
+          accessTokenHash,
+        },
+      });
+
+      return await this.remove(token);
+    } catch (error: unknown) {
+      this.logger.throwServiceError(
+        this.logoutWithAccessToken.name,
+        error,
         `Error logging out with access token ${accessToken}`,
       );
     }
+  }
+
+  /**
+   * Hashes a token
+   * @param token - The token to hash
+   * @returns The hashed token
+   */
+  hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   /**

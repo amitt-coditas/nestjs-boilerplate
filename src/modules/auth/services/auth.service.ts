@@ -120,16 +120,19 @@ export class AuthService {
       where: { deviceId: input.deviceId },
     });
     if (existingToken) {
-      await this.userTokenService.logout(existingToken.accessToken);
+      await this.userTokenService.logout(existingToken);
     }
 
     const { accessToken, accessTokenExpiry, refreshToken, refreshTokenExpiry } =
       this.generateTokens(input);
 
+    const accessTokenHash = this.userTokenService.hashToken(accessToken);
+    const refreshTokenHash = this.userTokenService.hashToken(refreshToken);
+
     await this.userTokenService.create({
-      accessToken,
+      accessTokenHash,
       accessTokenExpiry,
-      refreshToken,
+      refreshTokenHash,
       refreshTokenExpiry,
       loginType: input.loginType,
       os: input.os,
@@ -275,8 +278,16 @@ export class AuthService {
     );
 
     try {
+      const existingAccessTokenHash =
+        this.userTokenService.hashToken(accessToken);
+      const existingRefreshTokenHash =
+        this.userTokenService.hashToken(refreshToken);
+
       const existingUserToken = await this.userTokenService.findOneOrThrow({
-        where: { accessToken, refreshToken },
+        where: {
+          accessTokenHash: existingAccessTokenHash,
+          refreshTokenHash: existingRefreshTokenHash,
+        },
         relations: ['user', 'user.role'],
       });
       if (!existingUserToken)
@@ -289,7 +300,7 @@ export class AuthService {
           'Previous access-token is yet to expire',
         );
       if (new Date() > existingUserToken.refreshTokenExpiry) {
-        await this.userTokenService.logout(existingUserToken.accessToken);
+        await this.userTokenService.logout(existingUserToken);
         throw new ForbiddenException('Refresh token has been expired');
       }
 
@@ -302,11 +313,14 @@ export class AuthService {
         user: existingUserToken.user,
       };
       const newTokens = this.generateTokens(generateTokensInput);
+      const newAccessTokenHash = this.userTokenService.hashToken(
+        newTokens.accessToken,
+      );
 
       const updateResult = await this.userTokenService.update(
         existingUserToken,
         {
-          accessToken: newTokens.accessToken,
+          accessTokenHash: newAccessTokenHash,
           accessTokenExpiry: newTokens.accessTokenExpiry,
         },
       );

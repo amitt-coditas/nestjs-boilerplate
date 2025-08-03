@@ -214,6 +214,6 @@ export class AuthController {
     @Headers('authorization') authorization: string,
   ): Promise<IRemoveResponse> {
     const accessToken = authorization.split(' ')[1];
-    return this.userTokenService.logout(accessToken);
+    return this.userTokenService.logoutWithAccessToken(accessToken);
   }
 }

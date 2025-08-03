@@ -7,14 +7,14 @@ import { LOGIN_TYPE } from '../constants/login-type.enum';
 
 @Entity('user_tokens')
 export class UserToken extends AbstractEntity {
-  @Column({ type: 'text', name: 'access_token' })
-  accessToken!: string;
+  @Column({ type: 'text', name: 'access_token_hash' })
+  accessTokenHash!: string;
 
   @Column({ type: 'timestamptz', name: 'access_token_expiry' })
   accessTokenExpiry!: Date;
 
-  @Column({ type: 'text', name: 'refresh_token' })
-  refreshToken!: string;
+  @Column({ type: 'text', name: 'refresh_token_hash' })
+  refreshTokenHash!: string;
 
   @Column({ type: 'timestamptz', name: 'refresh_token_expiry' })
   refreshTokenExpiry!: Date;
