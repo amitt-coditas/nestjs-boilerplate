@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
+
+import { IsPassword } from '@utils/decorators';
 
 export class GeneratePasswordDto {
-  @ApiProperty({ description: 'The password to generate' })
+  @ApiProperty({
+    description: 'Password for the account',
+    example: 'Password@123',
+  })
   @IsNotEmpty()
-  @IsString()
+  @IsPassword()
   password: string;
 }

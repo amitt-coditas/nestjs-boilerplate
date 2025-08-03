@@ -1,7 +1,9 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class RegisterRequestDto {
+import { GeneratePasswordDto } from './generate-password.dto';
+
+export class RegisterRequestDto extends GeneratePasswordDto {
   @ApiProperty({
     description: 'The first name of the user',
     example: 'John',
@@ -25,14 +27,6 @@ export class RegisterRequestDto {
   @IsString()
   @IsNotEmpty()
   emailOrPhone: string;
-
-  @ApiProperty({
-    description: 'The password of the user',
-    example: 'password',
-  })
-  @IsString()
-  @IsNotEmpty()
-  password: string;
 }
 
 export class RegisterAfterSocialLoginRequestDto extends OmitType(

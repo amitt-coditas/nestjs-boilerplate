@@ -1,20 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class ResetForgotPasswordDto {
-  @ApiProperty({
-    description: 'The new password of the user',
-    example: 'password',
-  })
-  @IsNotEmpty()
-  @IsString()
-  password: string;
-}
+import { IsPassword } from '@utils/decorators';
+
+import { GeneratePasswordDto } from './generate-password.dto';
+
+export class ResetForgotPasswordDto extends GeneratePasswordDto {}
 
 export class ResetPasswordDto {
   @ApiProperty({
     description: 'The old password of the user',
-    example: 'password',
+    example: 'OldPassword@123',
   })
   @IsNotEmpty()
   @IsString()
@@ -22,9 +18,9 @@ export class ResetPasswordDto {
 
   @ApiProperty({
     description: 'The new password of the user',
-    example: 'password',
+    example: 'NewPassword@123',
   })
   @IsNotEmpty()
-  @IsString()
+  @IsPassword()
   newPassword: string;
 }
