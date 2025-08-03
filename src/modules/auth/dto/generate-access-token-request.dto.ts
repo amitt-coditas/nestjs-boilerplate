@@ -1,4 +1,4 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 import { LoginResponseDto } from './login.dto';
@@ -13,7 +13,4 @@ export class GenerateAccessTokenRequestDto {
   refreshToken: string;
 }
 
-export class GenerateAccessTokenResponseDto extends OmitType(LoginResponseDto, [
-  'refreshToken',
-  'refreshTokenExpiry',
-]) {}
+export class GenerateAccessTokenResponseDto extends LoginResponseDto {}

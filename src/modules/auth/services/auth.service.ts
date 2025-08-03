@@ -313,8 +313,12 @@ export class AuthService {
         user: existingUserToken.user,
       };
       const newTokens = this.generateTokens(generateTokensInput);
+
       const newAccessTokenHash = this.userTokenService.hashToken(
         newTokens.accessToken,
+      );
+      const newRefreshTokenHash = this.userTokenService.hashToken(
+        newTokens.refreshToken,
       );
 
       const updateResult = await this.userTokenService.update(
@@ -322,6 +326,8 @@ export class AuthService {
         {
           accessTokenHash: newAccessTokenHash,
           accessTokenExpiry: newTokens.accessTokenExpiry,
+          refreshTokenHash: newRefreshTokenHash,
+          refreshTokenExpiry: newTokens.refreshTokenExpiry,
         },
       );
       if (!updateResult)
@@ -330,6 +336,8 @@ export class AuthService {
       return {
         accessToken: newTokens.accessToken,
         accessTokenExpiry: newTokens.accessTokenExpiry,
+        refreshToken: newTokens.refreshToken,
+        refreshTokenExpiry: newTokens.refreshTokenExpiry,
       };
     } catch (error) {
       this.logger.throwServiceError(
